@@ -1,0 +1,474 @@
+{
+    "skill_name":  "powershell-enterprise-admin",
+    "evals":  [
+                  {
+                      "id":  1,
+                      "category":  "intune-graph-cli",
+                      "type":  "Type 2",
+                      "difficulty":  "medium",
+                      "prompt":  "I need a PowerShell script that connects to Microsoft Graph, pulls all Intune managed devices, and exports them to a CSV with device name, user, OS, and last sync time. The script should use pagination for large environments and handle rate limiting.",
+                      "expected_output":  "A PowerShell script with enterprise-standard header (.TITLE, .SYNOPSIS, .PLATFORM, .PERMISSIONS, etc.), module validation for Microsoft.Graph.Authentication, Get-MgGraphAllPages pagination helper, proper error handling, and CSV export.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "Get-MgGraphAllPages",
+                                         ".PERMISSIONS",
+                                         "DeviceManagementManagedDevices.Read.All",
+                                         "Initialize-Log",
+                                         "Write-Log"
+                                     ]
+                  },
+                  {
+                      "id":  2,
+                      "category":  "intune-remediation",
+                      "type":  "Type 2",
+                      "difficulty":  "hard",
+                      "prompt":  "Create an Intune Proactive Remediation pair to check if BitLocker is enabled on Windows devices and remediate if it\u0027s not. Detection should check the encryption status, remediation should enable BitLocker with recovery key backup to Azure AD.",
+                      "expected_output":  "Two PowerShell scripts (detect-bitlocker.ps1 and remediate-bitlocker.ps1) with proper enterprise-standard headers including .REMEDIATIONTYPE and .PAIRSCRIPT fields, exit codes (0=compliant, 1=non-compliant, 2=script error), try/catch error handling, and verification after remediation.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "detect-bitlocker.ps1:.REMEDIATIONTYPE",
+                                         "detect-bitlocker.ps1:.PAIRSCRIPT",
+                                         "remediate-bitlocker.ps1:.REMEDIATIONTYPE",
+                                         "remediate-bitlocker.ps1:.PAIRSCRIPT",
+                                         "remediate-bitlocker.ps1:exit 2",
+                                         "Get-BitLockerVolume",
+                                         "IntuneLogs",
+                                         "Both scripts follow canonical header field order including .TAGS and .PLATFORM",
+                                         "Detection is idempotent health-based check (safe to rerun, no system modification when compliant)",
+                                         "Remediation performs post-remediation verification (PostCheckStatus or equivalent) before exit 0"
+                                     ]
+                  },
+                  {
+                      "id":  3,
+                      "category":  "wpf-gui",
+                      "type":  "Type 1",
+                      "difficulty":  "medium",
+                      "prompt":  "Build me a WPF GUI tool for helpdesk that can search for a device by name in Intune, show its compliance status, and allow triggering a sync. It should have the dark/light theme toggle and proper logging.",
+                      "expected_output":  "A single-file PowerShell WPF tool following enterprise design standard: Tailwind Slate tokens, 19 required XAML styles, Guard-Action pattern, async Graph API calls, theme toggle, and structured logging with Add-LogLine.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "Add-LogLine",
+                                         "Guard-Action",
+                                         "Release-Action",
+                                         "DynamicResource",
+                                         "ThemeToggle",
+                                         "XamlReader"
+                                     ]
+                  },
+                  {
+                      "id":  4,
+                      "category":  "wpf-gui",
+                      "type":  "Type 1",
+                      "difficulty":  "hard",
+                      "prompt":  "ok my boss wants me to build an Intune compliance checker in PowerShell - it should connect to Graph API, pull all device compliance states, and show them in a WPF dashboard with dark mode and export to CSV. needs to handle auth with App Registration client credentials",
+                      "expected_output":  "A WPF GUI tool with enterprise-standard header, Graph API connection via client credentials (TenantId/ClientId/ClientSecret), compliance state DataGrid, dark/light theme toggle, CSV export, and structured logging with Add-LogLine.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "ClientSecret",
+                                         "client_credentials",
+                                         "Add-LogLine",
+                                         "Guard-Action",
+                                         "DynamicResource"
+                                     ]
+                  },
+                  {
+                      "id":  5,
+                      "category":  "wpf-gui",
+                      "type":  "Type 1",
+                      "difficulty":  "medium",
+                      "prompt":  "i need to make a PS1 script that sits on a shared drive and helpdesk techs can run it to do bulk password resets from a CSV. needs a GUI with a datagrid showing before/after, progress bar, and logging to a file. should look like the other admin tools we have",
+                      "expected_output":  "A single-file WPF tool with CSV import, DataGrid with row-checked bulk selection, Guard-Action on all buttons, progress bar via DispatcherTimer, Add-LogLine with file logging under %LOCALAPPDATA%, and enterprise design standard compliance.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "Add-LogLine",
+                                         "Guard-Action",
+                                         "Start-Job",
+                                         "DispatcherTimer",
+                                         "LOCALAPPDATA",
+                                         "Zero Segoe MDL2/Fluent/UI Symbol references - all icons are SVG Path elements with Data attributes",
+                                         "Defines canonical style keys BtnBase, Card and NavBtnBase (no invented names like PrimaryButtonStyle)",
+                                         "Uses canonical brush tokens BackgroundBrush, SurfaceBrush, AccentBrush (no ColorBg-style aliases)",
+                                         "Add-LogLine includes the script:lastLogKey duplicate guard",
+                                         "StatusBar uses control name StatusBarText (not StatusText) with StatusDot and StatusTime",
+                                         "README.md contains shields.io badges and a Disclaimer section"
+                                     ]
+                  },
+                  {
+                      "id":  6,
+                      "category":  "wpf-gui",
+                      "type":  "Type 1",
+                      "difficulty":  "medium",
+                      "prompt":  "can you build me a PowerShell tool that queries AD group membership across 200 OUs and shows the results in a filterable DataGrid? needs dark/light theme toggle and the sidebar pattern with navigation",
+                      "expected_output":  "A WPF tool following enterprise design standard with AD module integration, async data loading via Start-Job, filterable DataGrid, theme toggle, sidebar navigation, and Validate-Inputs pattern.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "Get-ADGroupMember",
+                                         "Start-Job",
+                                         "DynamicResource",
+                                         "Add-LogLine"
+                                     ]
+                  },
+                  {
+                      "id":  7,
+                      "category":  "wpf-gui",
+                      "type":  "Type 1",
+                      "difficulty":  "hard",
+                      "prompt":  "Build a multi-machine remote management tool in PowerShell - connect to 50 servers, run a command on all of them, and show results in a DataGrid with export to CSV",
+                      "expected_output":  "A WPF tool following enterprise design standard with WinRM/PSRemoting, async job management, runspace pool, DataGrid display, CSV export, and references/winrm-patterns.md patterns.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "Invoke-Command",
+                                         "CreateRunspacePool",
+                                         "Add-LogLine",
+                                         "Guard-Action",
+                                         "DynamicResource"
+                                     ]
+                  },
+                  {
+                      "id":  8,
+                      "category":  "wpf-gui",
+                      "type":  "Type 1",
+                      "difficulty":  "medium",
+                      "prompt":  "Make a PowerShell admin tool with a WPF interface that queries event logs across multiple servers and displays them in a searchable grid",
+                      "expected_output":  "A WPF tool following enterprise design standard with Get-WinEvent, multi-server support, searchable DataGrid, and references/event-log-patterns.md patterns.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "Get-WinEvent",
+                                         "FilterHashtable",
+                                         "Add-LogLine",
+                                         "Guard-Action"
+                                     ]
+                  },
+                  {
+                      "id":  9,
+                      "category":  "wpf-gui",
+                      "type":  "Type 1",
+                      "difficulty":  "medium",
+                      "prompt":  "I want a PowerShell script that pulls hardware inventory from domain computers using CIM and shows the results in a nice GUI with filtering",
+                      "expected_output":  "A WPF tool following enterprise design standard with Get-CimInstance, async data loading, filterable DataGrid, and proper error handling for CIM queries.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "Get-CimInstance",
+                                         "Start-Job",
+                                         "Add-LogLine",
+                                         "DynamicResource"
+                                     ]
+                  },
+                  {
+                      "id":  10,
+                      "category":  "wpf-gui",
+                      "type":  "Type 1",
+                      "difficulty":  "medium",
+                      "prompt":  "Create a PowerShell helpdesk GUI tool for managing printer queues - view, cancel, pause jobs, and show printer status with colored indicators",
+                      "expected_output":  "A WPF tool following enterprise design standard with Get-PrintJob/Remove-PrintJob, colored status indicators using DynamicResource, and structured logging.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "Get-PrintJob",
+                                         "Remove-PrintJob",
+                                         "DynamicResource",
+                                         "Add-LogLine",
+                                         "Guard-Action"
+                                     ]
+                  },
+                  {
+                      "id":  11,
+                      "category":  "intune-remediation",
+                      "type":  "Type 2",
+                      "difficulty":  "medium",
+                      "prompt":  "Write me a simple PowerShell CLI script (no GUI) that flushes the DNS cache and cleans the Windows temp folder on this machine, logs each step to a log file, and reports how much space was freed. It will run as an Intune remediation so it needs the detection/remediation structure.",
+                      "expected_output":  "A detection + remediation CLI script pair named detect-*.ps1 / remediate-*.ps1 with the Intune structured header, Write-Log (NOT Add-LogLine) for console+file logging under \u003cSystemDrive\u003e\\IntuneLogs\\\u003cSolutionName\u003e\\, .PERMISSIONS declaring no Graph scopes, exit codes 0/1/2, and space-freed reporting.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "detect-",
+                                         "remediate-",
+                                         "Write-Log",
+                                         ".PERMISSIONS",
+                                         "exit 2",
+                                         "IntuneLogs"
+                                     ]
+                  },
+                  {
+                      "id":  12,
+                      "category":  "intune-notification",
+                      "type":  "Type 2",
+                      "difficulty":  "hard",
+                      "prompt":  "Build an Intune notification script that runs daily in Azure Automation and emails the IT team when any device certificate in the tenant expires within 30 days. It must use Managed Identity auth and send HTML email via the Graph Mail API.",
+                      "expected_output":  "A notify-*.ps1 script with .EXECUTION RunbookOnly and .OUTPUT Email header fields, Azure Automation context detection, Managed Identity auth, New-EmailBody/Get-AlertAnalysis/Send-EmailNotification functions, saveToSentItems=$false, and certificate expiration logic.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "notify-",
+                                         "RunbookOnly",
+                                         ".OUTPUT",
+                                         "Connect-MgGraph -Identity",
+                                         "saveToSentItems",
+                                         "New-EmailBody",
+                                         "Send-EmailNotification"
+                                     ]
+                  },
+                  {
+                      "id":  13,
+                      "category":  "macos-bash",
+                      "type":  "Type 3",
+                      "difficulty":  "medium",
+                      "prompt":  "Create a bash script for macOS that checks if it runs as root, sets a preference via defaults write for the logged-in user, and logs every step to /var/log. It runs as an Intune shell script on Macs.",
+                      "expected_output":  "A bash script with the canonical macOS header, check_root that logs the error and exits 1 (not exit 0), defaults write usage, log_message logging to /var/log, and logged-in user detection via /dev/console.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "check_root",
+                                         "EUID",
+                                         "defaults write",
+                                         "log_message",
+                                         "/var/log",
+                                         "exit 1"
+                                     ]
+                  },
+                  {
+                      "id":  14,
+                      "category":  "documentation",
+                      "type":  "Type 4",
+                      "difficulty":  "easy",
+                      "prompt":  "I just finished my Intune remediation pair (detect-disk-cleanup.ps1 and remediate-disk-cleanup.ps1) and need a professional README.md for the GitHub repo - badges, exit code table, project structure, requirements, and usage examples.",
+                      "expected_output":  "A README.md following references/readme-template.md: shields.io badges, emoji section headers, exit codes table including 2=script error, project structure block, requirements, and usage examples.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "README.md:shields.io",
+                                         "README.md:Exit Codes",
+                                         "README.md:detect-disk-cleanup.ps1",
+                                         "README.md:remediate-disk-cleanup.ps1",
+                                         "README.md:Project Structure"
+                                     ]
+                  },
+                  {
+                      "id":  15,
+                      "category":  "general-cli",
+                      "type":  "Type 3",
+                      "difficulty":  "medium",
+                      "prompt":  "Create a small PowerShell CLI script that collects inventory (computer name, OS, RAM, last boot time) from computers listed in computers.csv and exports an inventory-report.csv. Also make sure the skill learns from any mistakes during this build.",
+                      "expected_output":  "A PowerShell CLI script using Write-Log, plus a new structured entry (Mistake/Cause/Fix/Rule) appended to the GLOBAL Lessons Learned Register at \u003cskill-dir\u003e/lessons-learned.md.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "lessons-learned.md:## ",
+                                         "lessons-learned.md:Mistake",
+                                         "lessons-learned.md:Cause",
+                                         "lessons-learned.md:Fix",
+                                         "lessons-learned.md:Rule",
+                                         "Write-Log",
+                                         "Report path anchored beside script via PSScriptRoot fallback (Law 12)",
+                                         "Logs to C:\\ProgramData\\\u003cToolName\u003e\\Logs",
+                                         "No #Requires -RunAsAdministrator anywhere in script"
+                                     ]
+                  },
+                  {
+                      "id":  16,
+                      "category":  "general-cli",
+                      "type":  "Type 3",
+                      "difficulty":  "hard",
+                      "prompt":  "Write a standalone CLI PowerShell script for Active Directory that finds all user accounts inactive for more than 90 days in a given OU, disables them, moves them to a Disabled_Users OU, and supports -WhatIf / -Confirm safety flags. Log all actions using Write-Log.",
+                      "expected_output":  "A production-grade CLI script with CmdletBinding(SupportsShouldProcess), ActiveDirectory module validation, Search-ADAccount or Get-ADUser LDAP filter, Disable-ADAccount and Move-ADObject wrapped in ShouldProcess, Write-Log under ProgramData, and exit code handling.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "SupportsShouldProcess",
+                                         "ShouldProcess",
+                                         "Disable-ADAccount",
+                                         "Move-ADObject",
+                                         "Initialize-Log",
+                                         "Write-Log"
+                                     ]
+                  },
+                  {
+                      "id":  17,
+                      "category":  "general-cli",
+                      "type":  "Type 3",
+                      "difficulty":  "medium",
+                      "prompt":  "Create a CLI PowerShell script that uses WinRM / PSRemoting to test connectivity and restart the Print Spooler service across a list of remote servers from a text file, handling unreachable hosts gracefully.",
+                      "expected_output":  "A Type 3 CLI script with Test-WSMan or Test-NetConnection pre-check, Invoke-Command with classified error handling (access denied, WinRM disabled, timeout), Write-Log logging under ProgramData, and structured output.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "Invoke-Command",
+                                         "Test-WSMan",
+                                         "Restart-Service",
+                                         "Initialize-Log",
+                                         "Write-Log"
+                                     ]
+                  },
+                  {
+                      "id":  18,
+                      "category":  "general-cli",
+                      "type":  "Type 3",
+                      "difficulty":  "medium",
+                      "prompt":  "Write a CLI PowerShell script that queries Windows Event Log for failed logons (Event ID 4625) across the last 24 hours using Get-WinEvent with FilterHashtable for maximum performance and exports a CSV summary.",
+                      "expected_output":  "A Type 3 CLI script using Get-WinEvent -FilterHashtable (LogName=\u0027Security\u0027, Id=4625, StartTime), XML event property extraction, Write-Log logging, and Export-Csv.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "Get-WinEvent",
+                                         "FilterHashtable",
+                                         "4625",
+                                         "Export-Csv",
+                                         "Write-Log"
+                                     ]
+                  },
+                  {
+                      "id":  19,
+                      "category":  "macos-bash",
+                      "type":  "Type 3",
+                      "difficulty":  "medium",
+                      "prompt":  "Write a macOS bash script to be deployed as an Intune Custom Attribute that checks if FileVault disk encryption is enabled and outputs only the status string (Enabled or Disabled) to stdout.",
+                      "expected_output":  "A macOS Intune Custom Attribute script that uses fdesetup status, echoes exactly one single line to stdout with exit 0, and avoids polluting stdout with extra log banners.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "fdesetup status",
+                                         "exit 0"
+                                     ]
+                  },
+                  {
+                      "id":  20,
+                      "category":  "intune-graph-cli",
+                      "type":  "Type 2",
+                      "difficulty":  "hard",
+                      "prompt":  "Create a PowerShell script that uses Microsoft Graph batching ($batch endpoint) to delete 100 stale Intune devices in chunks of 20, retrying only the throttled sub-requests.",
+                      "expected_output":  "A Type 2 script that builds JSON batch requests of 20 items per chunk, uses Invoke-GraphBatchRequest (or Invoke-GraphRequestWithRetry against $batch), extracts 429/5xx failed IDs for retrying, and logs progress via Write-Log.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "Invoke-GraphBatchRequest",
+                                         "batch",
+                                         "Invoke-GraphRequestWithRetry",
+                                         "Write-Log"
+                                     ]
+                  },
+                  {
+                      "id":  21,
+                      "category":  "general-cli",
+                      "type":  "Universal",
+                      "difficulty":  "easy",
+                      "prompt":  "Write a PowerShell function that parses date strings from multiple international formats and Graph API ISO-8601 responses (with fractional seconds) safely without machine-culture exceptions.",
+                      "expected_output":  "A function implementing ConvertTo-SafeDateTime using DateTime::TryParseExact with InvariantCulture and standard ISO/round-trip format patterns returning datetime or null.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "ConvertTo-SafeDateTime",
+                                         "TryParseExact",
+                                         "InvariantCulture",
+                                         "AssumeUniversal"
+                                     ]
+                  },
+                  {
+                      "id":  22,
+                      "category":  "intune-automation-admin",
+                      "type":  "Type 2",
+                      "difficulty":  "hard",
+                      "prompt":  "Write a PowerShell script that grants Microsoft Graph application permissions to an Azure Automation account\u0027s system-assigned managed identity using New-MgServicePrincipalAppRoleAssignment.",
+                      "expected_output":  "A script that looks up the Managed Identity service principal and Graph Service Principal, queries AppRoles for the requested permissions, checks for existing assignments, and calls New-MgServicePrincipalAppRoleAssignment.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "New-MgServicePrincipalAppRoleAssignment",
+                                         "Get-MgServicePrincipal",
+                                         "AppRoleAssignment.ReadWrite.All",
+                                         "AppRoleId",
+                                         "PrincipalId"
+                                     ]
+                  },
+                  {
+                      "id":  23,
+                      "category":  "monitoring-reporting",
+                      "type":  "Type 2",
+                      "difficulty":  "medium",
+                      "prompt":  "Create an Azure Automation Runbook script that collects non-compliant Intune devices and ingests them as JSON logs into an Azure Log Analytics Workspace via the HTTP Data Collector API.",
+                      "expected_output":  "A runbook script using Managed Identity authentication, Get-MgGraphAllPages to retrieve non-compliant devices, builds HMAC-SHA256 signature headers, and POSTs records to Azure Log Analytics Workspace.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "Connect-MgGraph -Identity",
+                                         "Get-MgGraphAllPages",
+                                         "HMACSHA256",
+                                         "SharedKey",
+                                         "ods.opinsights.azure.com"
+                                     ]
+                  },
+                  {
+                      "id":  24,
+                      "category":  "intune-remediation",
+                      "type":  "Type 2",
+                      "difficulty":  "hard",
+                      "prompt":  "Create an Intune Proactive Remediation pair that runs as a recurring maintenance task to clear the Downloads folder for all user profiles on Windows devices under C:\\Users. Detection must use the Always-Run pattern (exit 1), and Remediation must implement per-target failure tracking (exit 0 on partial success, exit 1 if all fail) and report the total space freed in human-readable format.",
+                      "expected_output":  "A detect/remediate pair with Always-Run detection (intentional exit 1 trigger), multi-user profile scanning under C:\\Users, per-target failure tracking, Format-FileSize reporting, and standardized Intune logging under SystemDrive\\IntuneLogs.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "detect-",
+                                         "remediate-",
+                                         "C:\\Users",
+                                         "Format-FileSize",
+                                         "IntuneLogs",
+                                         "targetCount",
+                                         "failedCount",
+                                         "exit 1",
+                                         "exit 0"
+                                     ]
+                  },
+                  {
+                      "id":  25,
+                      "category":  "wpf-gui-cli-wrapper",
+                      "type":  "Type 1",
+                      "difficulty":  "hard",
+                      "prompt":  "Build a WPF GUI utility in PowerShell that packages Win32 application source folders using an external executable (like IntuneWinAppUtil.exe or DISM.exe). The tool must run the external process in an asynchronous STA background runspace without freezing the UI, stream colored output in real time into an in-app RichTextBox Message Center (Pattern S), display host/user/elevation pill in the sidebar, and poll completion using DispatcherTimer.",
+                      "expected_output":  "A production-ready Type 1 WPF GUI tool with System.Diagnostics.ProcessStartInfo in an STA runspace, DispatcherTimer polling, RichTextBox color-coded logging (Paragraph/Run), Is-ChildPath folder validation, and a Session Card with elevation badge.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "runspacefactory",
+                                         "ProcessStartInfo",
+                                         "RedirectStandardOutput",
+                                         "DispatcherTimer",
+                                         "RichTextBox",
+                                         "Paragraph",
+                                         "SessionElevationPill"
+                                     ]
+                  }
+              ]
+}
