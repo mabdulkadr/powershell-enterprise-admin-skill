@@ -14,6 +14,7 @@
 - `.REMEDIATIONTYPE` + `.PAIRSCRIPT` only for Intune pairs (`detect-*` / `remediate-*`).
 - `.MINROLE` only for Graph/Intune tools.
 - `.PERMISSIONS` = real Graph scopes or `None (local SYSTEM context)` for local-only scripts. Never invent scopes.
+- `.AUTHOR` resolves at build time: use `git config user.name` when discoverable; otherwise the literal `AI Generated`. Never ship an unresolved `[Your Name]` placeholder.
 - `.CHANGELOG` is newest-first and documents FIXES with cause.
 
 ## Canonical Header Template
@@ -72,6 +73,10 @@
 3. Configuration / Functions / Main
 
 Never `#Requires -RunAsAdministrator`. Detect at runtime with `Test-IsElevated` and degrade gracefully (WARNING log + skip).
+
+### Why keep `#Requires -Version 5.1` at all?
+
+It is a one-line guardrail against **legacy hosts** (Windows PowerShell 2.0–4.0 on old servers/laptops) where scripts using PS3+ features (`Get-CimInstance`, `[PSCustomObject]`, `-Tail`) would otherwise die with cryptic parse errors mid-run. On any modern host it is inert and costs nothing. Deleting it removes real protection for zero gain; moving it below the header satisfies the header-first contract. This is the documented rationale — do not re-litigate or remove it in future passes.
 
 ## References
 

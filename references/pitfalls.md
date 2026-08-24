@@ -6,22 +6,29 @@ Every crash listed here was debugged in production. The fix is included. Read th
 
 ## Table of Contents
 
-1. [PS 5.1 Specific Crashes](#ps-51-specific-crashes)
-2. [XAML Silent Failures](#xaml-silent-failures)
-3. [Theme Issues](#theme-issues)
-4. [Job / Thread Issues](#job--thread-issues)
-5. [CLI Script Traps](#cli-script-traps)
-6. [Build Verification](#build-verification)
-7. [Pitfall: Measure-Object .Sum Returns $null on Empty Sets](#pitfall-measure-object-sum-returns-null-on-empty-sets)
-8. [Pitfall: External Cleanup Processes Can Hang Forever](#pitfall-external-cleanup-processes-can-hang-forever)
-9. [Trade-off: The Canonical Rich Header Disables Get-Help](#trade-off-the-canonical-rich-header-disables-get-help)
-10. [Pitfall: Test-Path Throws on ACL-Protected Paths](#pitfall-test-path-throws-on-acl-protected-paths)
-11. [Pitfall: PS 5.1 Reads BOM-less UTF-8 as ANSI](#pitfall-ps-51-reads-bom-less-utf-8-as-ansi)
-12. [Pitfall: WhatIf Propagates Into Logging Helpers](#pitfall-whatif-propagates-into-logging-helpers)
-13. [Pitfall: $PSScriptRoot Is Empty When Dot-Sourced](#pitfall-psscriptroot-is-empty-when-dot-sourced)
-14. [Pitfall: Initial Theme Not Applied — All-White Screen Until First Toggle](#pitfall-initial-theme-not-applied--all-white-screen-until-first-toggle)
+1. [Table of Contents](#table-of-contents)
+2. [PS 5.1 Specific Crashes](#ps-51-specific-crashes)
+3. [XAML Silent Failures](#xaml-silent-failures)
+4. [Theme Issues](#theme-issues)
+5. [Job / Thread Issues](#job-thread-issues)
+6. [CLI Script Traps](#cli-script-traps)
+7. [Build Verification](#build-verification)
+8. [Pitfall: Measure-Object .Sum Returns $null on Empty Sets](#pitfall-measure-object-sum-returns-null-on-empty-sets)
+9. [Pitfall: External Cleanup Processes Can Hang Forever](#pitfall-external-cleanup-processes-can-hang-forever)
+10. [Trade-off: The Canonical Rich Header Disables Get-Help](#trade-off-the-canonical-rich-header-disables-get-help)
+11. [Pitfall: Test-Path Throws on ACL-Protected Paths](#pitfall-test-path-throws-on-acl-protected-paths)
+12. [Pitfall: PS 5.1 Reads BOM-less UTF-8 as ANSI](#pitfall-ps-51-reads-bom-less-utf-8-as-ansi)
+13. [Pitfall: WhatIf Propagates Into Logging Helpers](#pitfall-whatif-propagates-into-logging-helpers)
+14. [Pitfall: $PSScriptRoot Is Empty When Dot-Sourced](#pitfall-psscriptroot-is-empty-when-dot-sourced)
+15. [Pitfall: Initial Theme Not Applied — All-White Screen Until First Toggle](#pitfall-initial-theme-not-applied-all-white-screen-until-first-toggle)
+16. [Pitfall: Standalone [HelpMessage()] Attribute Crashes PS 5.1](#pitfall-standalone-helpmessage-attribute-crashes-ps-51)
+17. [Pitfall: Array-Preserve Comma Cannot Combine With Splatting Syntax](#pitfall-array-preserve-comma-cannot-combine-with-splatting-syntax)
+18. [Pitfall: Indexer Assignment Into XamlReader Resources Corrupts Deferred DynamicResource](#pitfall-indexer-assignment-into-xamlreader-resources-corrupts-deferred-dynamicresource)
+19. [Pitfall: Bracket Paths Turn -Path Into Wildcards And Break Log Writes](#pitfall-bracket-paths-turn-path-into-wildcards-and-break-log-writes)
+20. [Pitfall: Event Handlers Cannot See Builder Function Locals](#pitfall-event-handlers-cannot-see-builder-function-locals)
 
 ---
+
 
 ## PS 5.1 Specific Crashes
 
@@ -584,3 +591,148 @@ try {
 3. The toggle handler then flips `$script:isDarkMode` and calls `Set-Theme` again — first paint and toggle both use the same code path.
 
 **Verification:** Launch tool fresh (no toggle) — sidebar `SidebarBrush #E8EDF4`, header `SurfaceBrush #FFFFFF`, active nav `AccentTintBrush #EFF6FF`, KPI `AccentBrush #3B82F6` must all be distinct. Take a screenshot before any toggle.
+
+## Pitfall: Standalone [HelpMessage()] Attribute Crashes PS 5.1
+
+Declaring `[HelpMessage('...')]` as a standalone attribute above a parameter parses cleanly in pwsh 7 but throws `CustomAttributeTypeNotFound` at runtime on Windows PowerShell 5.1. HelpMessage is not an attribute type - it is a named argument of the Parameter attribute. A tool that passes pwsh checks can still fail its first real run on 5.1.
+
+```powershell
+# ? Crashes PS 5.1 at runtime
+[Parameter(Mandatory = $false)]
+[HelpMessage('Adapter names')]
+[string[]]$AdapterName
+
+# ? Correct - named argument inside Parameter()
+[Parameter(Mandatory = $false, HelpMessage = 'Adapter names')]
+[string[]]$AdapterName
+```
+
+**Rules:**
+1. Always declare HelpMessage as a named argument of `[Parameter()]` - never as a standalone attribute.
+2. Smoke-test every CLI tool under Windows PowerShell 5.1 (`powershell.exe -File tool.ps1 -WhatIf`); pwsh-only success is not proof. `scripts/Test-Delivery.ps1 -SmokeTest` automates this.
+
+## Pitfall: Array-Preserve Comma Cannot Combine With Splatting Syntax
+
+Writing `return ,@$variable` is a parse error ("The splatting operator '@' cannot be used to reference variables in an expression"). The array-preserve comma and the splatting operator are different uses of `@`; only splatting takes the `@var` form, and it is valid only as a command argument.
+
+```powershell
+# ? Parse error
+return ,@$bindings
+
+# ? Correct - comma operator preserves the array through the pipeline
+return ,$bindings
+```
+
+**Rules:**
+1. To return a single-element array intact, use `return ,$array` - never `,@$array`.
+2. Run the parser check before delivering; this class of error never survives `[System.Management.Automation.Language.Parser]::ParseFile`.
+
+## Pitfall: Indexer Assignment Into XamlReader Resources Corrupts Deferred DynamicResource
+
+Swapping theme tokens with `$window.Resources[$key] = $brush` on a dictionary produced by `XamlReader.Load/Parse` crashes at runtime with `"'#FFxxxxxxxx' is not a valid value for property '...'"` - the property and hex differ run to run because deferred DynamicResource references (created pre-ShowDialog) resolve through a corrupted stale entry. The assigned value itself is a perfectly valid frozen SolidColorBrush; the indexer path is what breaks.
+
+```powershell
+# ? Crashes during Set-Theme / theme toggle
+$Window.Resources[$key] = New-Brush -Hex $tokens[$key]
+
+# ? Safe - re-register the entry
+if ($Window.Resources.Contains($key)) { $null = $Window.Resources.Remove($key) }
+$Window.Resources.Add($key, (New-Brush -Hex $tokens[$key]))
+```
+
+**Rules:**
+1. In any runtime theme switch, use Remove+Add - never indexer assignment - on XamlReader-built resources.
+2. BeginInit/EndInit does NOT help (verified); the failure fires at EndInit/indexing regardless.
+3. Repro harness pattern: truncate the tool before ShowDialog, Invoke-Expression the head, call Set-Theme under `powershell.exe -STA` AND `pwsh -STA`.
+
+## Pitfall: Bracket Paths Turn -Path Into Wildcards And Break Log Writes
+
+A log path containing square brackets (`[ToolName]_20260823.log` from an uncustomized template placeholder, or any computer/username pattern) is treated as a wildcard set by `-Path`. When no file matches, the FileSystem provider hides its dynamic parameters and PowerShell reports the absurd `A parameter cannot be found that matches parameter name 'Encoding'` on the Add-Content line - pointing at Encoding while the real problem is the path.
+
+Related trap: `New-Item` has **no** `-LiteralPath` parameter at all; switching cmdlets blindly breaks creation lines. Use .NET filesystem methods instead - they are wildcard-free by design.
+
+```powershell
+# ? Misleading 'Encoding not found' when path contains []
+Add-Content -Path $script:LogFile -Value $line -Encoding UTF8
+New-Item -LiteralPath $script:LogFile -ItemType File   # ? no such parameter
+
+# ? LiteralPath for IO cmdlets + .NET for creation
+Test-Path -LiteralPath $script:LogFile
+Add-Content -LiteralPath $script:LogFile -Value $line -Encoding UTF8
+$null = [System.IO.Directory]::CreateDirectory($script:LogRoot)
+$null = [System.IO.File]::Create($script:LogFile).Dispose()
+```
+
+**Rules:**
+1. Every Test-Path / Add-Content / Get-Content against a constructed log or report path uses -LiteralPath.
+2. Never create files/dirs with New-Item -LiteralPath (does not exist); use [System.IO.Directory]::CreateDirectory and [System.IO.File]::Create($p).Dispose().
+3. Templates throw a clear "replace [ToolName]" error before any logging runs when placeholders remain.
+
+## Pitfall: Event Handlers Cannot See Builder Function Locals
+
+A scriptblock passed to `Add_Click`/`Add_Tick` runs later under WPF dispatch, rebound to session scope - any reference to the defining function's locals resolves to NULL at invocation time. The tool opens fine, then crashes on the FIRST button press with `You cannot call a method on a null-valued expression` bubbling out of the main window's ShowDialog.
+
+```powershell
+# ? Crashes when clicked - $win is out of scope by then
+function New-ChildWindow {
+    $win = ConvertTo-XamlWindow -Xaml $x
+    $win.FindName('okBtn').Add_Click({ $win.Close() })
+}
+
+# ? Publish script-scoped refs, then bind handlers to them
+$script:ChildWindow = $win
+$win.FindName('okBtn').Add_Click({ $script:ChildWindow.Close() })
+```
+
+**Rules:**
+1. Inside any Add_Click/Add_Tick/Add_Closed scriptblock, touch ONLY `$script:` variables, `$this`, or `$_`.
+2. For one-shot timers use `$this.Stop()` instead of referencing the timer variable.
+3. Test every button by raising real Click events under a pumped dispatcher (`RaiseEvent(new RoutedEventArgs([Button]::ClickEvent))`) - building the window alone proves nothing about handler bindings.
+
+## Pitfall: RichTextBox Log Appends Without LineBreak Appear As One Line
+
+RichTextBox Paragraph.Inlines with consecutive Runs and no LineBreak renders as a single continuous line: [DEBUG] ...[INFO] ...[SUCCESS] ... . Using "
+" inside a Run is ignored by WPF.
+
+```powershell
+# -- Wrong: concatenated line
+$null=$para.Inlines.Add($head); $null=$para.Inlines.Add($body)
+
+# -- Correct: explicit LineBreak after each entry
+$null=$para.Inlines.Add($head); $null=$para.Inlines.Add($body); $null=$para.Inlines.Add((New-Object System.Windows.Documents.LineBreak))
+```
+
+**Rule:** Every RichTextBox log append must end with an explicit LineBreak element.
+
+## Pitfall: Default DataGrid Visuals Are Flat
+
+Default DataGrid has plain header, no alternating rows and no hover feedback, so tables look unfinished.
+
+**Fix:** Add implicit enterprise theme in Window.Resources (TableBg/TableAltBg/TableHeaderBg, Header 36px SemiBold, RowHeight 34, AlternationCount 2, hover AccentTintBrush, cell Padding 12,0) and wrap each DataGrid in Border CornerRadius 8 with count badge in card header.
+
+## Pitfall: Flat HTML Executive Report
+
+Minimal HTML (flat header, plain grid) looks weak compared to WPF polish.
+
+**Fix:** Use premium hero (gradient banner + KPI row with SVG icons + toolbar with search + resultCount + Print button + card-head gradient + table-wrap rounded + Volumes progress bars bar-ok/warn/err + footer-inner). Pattern U premium template is canonical.
+
+## Pitfall: String Interpolation With Percent After Subexpression Crashes PS 5.1
+
+"$($_.FreePercent)%" inside an expandable string is parsed as modulo operator in PS 5.1 and crashes with "The string is missing the terminator" or "A positional parameter cannot be found".
+
+```powershell
+# -- Wrong in PS 5.1
+"$($_.FreeSpace) free of $($_.Size) ($($_.FreePercent)%)"
+
+# -- Correct: use Format operator
+('{0} free of {1} ({2}%)' -f $_.FreeSpace, $_.Size, $_.FreePercent)
+```
+
+**Rule:** Never put "%" directly after ")" inside an expandable string in PS 5.1 - use -f formatting.
+
+## Pitfall: About Dialog Must Be Concise And ASCII-Only
+
+About that mirrors the full README with 12 sections is too verbose, and live system data (ComputerName, OS Caption) inside XAML Text attributes introduces non-ASCII or dynamic values that break 5.1 parsing or compliance (literal "Add_Closing" inside XAML is counted as second handler).
+
+**Fix:** About is concise program definition only: hero + Overview paragraph + 3 Highlights + Requirements/Author grid + Disclaimer, height 520, ASCII-only, avoid literal "Add_Closing" inside XAML strings (use "window-closing").
+

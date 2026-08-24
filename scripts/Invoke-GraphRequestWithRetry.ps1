@@ -17,7 +17,7 @@
     Hashtable of custom headers to include with the request.
 
 .PARAMETER Service
-    Target service name for 403 error message mapping ('EntraID', 'Intune', 'Autopilot', 'Exchange', 'Defender').
+    Target service name for 403 error message mapping ('EntraID', 'Intune', 'Autopilot', 'Exchange', 'Defender', 'Teams', 'SharePoint').
 
 .PARAMETER BaseDelaySeconds
     Base delay interval in seconds for backoff. Default is 2.

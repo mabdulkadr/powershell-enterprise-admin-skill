@@ -5,6 +5,19 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versio
 
 ---
 
+## [1.2] - 2026-08-23
+
+### Added
+
+- `templates/` library (11 scaffolds): Intune detect/remediate/notification, CLI tool, WPF GUI tool (all 19 canonical styles + StatusBarText quartet), macOS bash, 4 README variants, and a usage guide with the TEMPLATE LOCK rule
+- Smart Sectioning matrix (conditional README sections per script type) in SKILL.md and references/readme-template.md
+- Canonical verbatim Disclaimer wording across SKILL.md and all template variants
+
+### Changed
+
+- SKILL.md workflow now starts every build from `templates/`; Quick Recap #1 and reference list updated
+- `_header-canonical.md` documents the rationale for keeping `#Requires -Version 5.1`
+
 ## [1.1] - 2026-08-22
 
 ### Added

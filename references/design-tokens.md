@@ -88,8 +88,8 @@ Copy this block verbatim into every `MainWindow.xaml` inside `<Window.Resources>
 
 <!-- Markdown rendering (used in AboutInfo) -->
 <SolidColorBrush x:Key="LinkFg" Color="#3B82F6"/>
-<SolidColorBrush x:Key="BlockBgColor" Color="#F0F9FF"/>
-<SolidColorBrush x:Key="BlockFgColor" Color="#1E40AF"/>
+<SolidColorBrush x:Key="BlockquoteBg" Color="#F0F9FF"/>
+<SolidColorBrush x:Key="BlockquoteFg" Color="#1E40AF"/>
 <SolidColorBrush x:Key="BulletFg" Color="#3B82F6"/>
 <SolidColorBrush x:Key="IconBg" Color="#DBEAFE"/>
 <SolidColorBrush x:Key="IconFg" Color="#1D4ED8"/>
@@ -103,64 +103,49 @@ Copy this block verbatim into every `MainWindow.xaml` inside `<Window.Resources>
 
 ## Dark Mode Overrides
 
-This block lives in `Set-Theme -Window $script:Window -IsDark $true` in `WpfHelpers.ps1`. Every key from the light-mode seed block is overridden:
+This block lives in `Set-Theme -Window $script:Window -IsDark $true` (Pattern A - Theme Toggle). Every key from the light-mode seed block is overridden:
 
 ```powershell
-$resources = $Window.Resources
-$resources['BackgroundBrush']    = New-Brush '#1E293B'
-$resources['SurfaceBrush']       = New-Brush '#334155'
-$resources['SurfaceHoverBrush']  = New-Brush '#475569'
-$resources['SidebarBrush']       = New-Brush '#475569'
-$resources['BorderBrush']        = New-Brush '#475569'
-$resources['BorderHoverBrush']   = New-Brush '#60A5FA'
-$resources['TextPrimaryBrush']   = New-Brush '#FFFFFF'
-$resources['TextSecondaryBrush'] = New-Brush '#CBD5E1'
-$resources['TextMutedBrush']     = New-Brush '#94A3B8'
-$resources['TextBodyBrush']      = New-Brush '#E2E8F0'
-$resources['AccentBrush']        = New-Brush '#60A5FA'
-$resources['AccentHoverBrush']   = New-Brush '#93C5FD'
-$resources['AccentTintBrush']    = New-Brush '#1E3A5F'
-$resources['SuccessBrush']       = New-Brush '#10B981'
-$resources['DangerBrush']        = New-Brush '#EF4444'
-$resources['BtnPrimaryBg']       = New-Brush '#5B7CF5'
-$resources['BtnBlueBg']          = New-Brush '#4A78E8'
-$resources['BtnGreenBg']         = New-Brush '#2EA76E'
-$resources['BtnRedBg']           = New-Brush '#D9534F'
-$resources['BtnPurpleBg']        = New-Brush '#9560D8'
-$resources['BtnGhostFg']         = New-Brush '#A0A1A6'
-$resources['BtnGhostHoverBg']    = New-Brush '#232536'
-$resources['CodeBg']             = New-Brush '#1E3A5F'
-$resources['CodeFg']             = New-Brush '#93C5FD'
-$resources['CodeBlockBg']        = New-Brush '#0F172A'
-$resources['CodeBlockFg']        = New-Brush '#E2E8F0'
-$resources['TableBg']            = New-Brush '#334155'
-$resources['TableHeaderBg']      = New-Brush '#475569'
-$resources['TableAltBg']         = New-Brush '#3B4A5E'
-$resources['TableBorder']        = New-Brush '#475569'
-$resources['LinkFg']             = New-Brush '#60A5FA'
-$resources['BlockBgColor']       = New-Brush '#1E3A5F'
-$resources['BlockFgColor']       = New-Brush '#93C5FD'
-$resources['BulletFg']           = New-Brush '#60A5FA'
-$resources['IconBg']             = New-Brush '#1E3A5F'
-$resources['IconFg']             = New-Brush '#60A5FA'
-$resources['H4Fg']               = New-Brush '#93C5FD'
-$resources['HeadingFg']          = New-Brush '#F1F5F9'
-$resources['BodyFg']             = New-Brush '#E2E8F0'
-$resources['SeparatorBg']        = New-Brush '#475569'
-$resources['UnderlineFg']        = New-Brush '#60A5FA'
-$resources['TabAccentBg']        = New-Brush '#60A5FA'
-$resources['TabAccentText']      = New-Brush '#FFFFFF'
-$resources['TabInactiveBg']      = New-Brush '#1E293B'
-$resources['TabInactiveBorder']  = New-Brush '#475569'
-$resources['TabInactiveText']    = New-Brush '#94A3B8'
-$resources['TabHoverBg']         = New-Brush '#334155'
-$Window.Background = New-Brush '#1E293B'
+# Remove + Add (NOT indexer assignment) — indexer assignment on a XamlReader-built
+# Resources dictionary corrupts deferred DynamicResource references. See references/pitfalls.md
+# "Pitfall: Indexer Assignment on XamlReader-Built ResourceDictionary" for the empirical failure mode.
+foreach ($key in $tokens.Keys) {
+    if ($Window.Resources.Contains($key)) { $null = $Window.Resources.Remove($key) }
+    $null = $Window.Resources.Add($key, (New-Brush -Hex $tokens[$key]))
+}
+$Window.Background = New-Brush -Hex $tokens['BackgroundBrush']
 ```
 
-`Set-Theme -IsDark $false` restores every value to its light-mode seed. Always pair the two functions so toggling is symmetric.
+Then `Set-Theme` is called with the dark-mode token hashtable:
 
----
+```powershell
+$darkTokens = @{
+    BackgroundBrush    = '#1E293B'; SurfaceBrush     = '#334155'; SurfaceHoverBrush = '#475569'
+    SidebarBrush       = '#475569'; AccentBrush      = '#60A5FA'; AccentHoverBrush  = '#93C5FD'
+    AccentTintBrush    = '#1E3A5F'; SuccessBrush     = '#10B981'; DangerBrush       = '#EF4444'
+    WarningBrush       = '#F59E0B'; TextPrimaryBrush = '#FFFFFF'; TextSecondaryBrush = '#CBD5E1'
+    TextMutedBrush     = '#94A3B8'; TextBodyBrush    = '#E2E8F0'; BorderBrush       = '#475569'
+    BorderHoverBrush   = '#60A5FA'; SeparatorBg      = '#475569'
+    BtnPrimaryBg       = '#5B7CF5'; BtnBlueBg        = '#4A78E8'; BtnGreenBg  = '#2EA76E'
+    BtnRedBg           = '#D9534F'; BtnPurpleBg      = '#9560D8'; BtnGhostFg  = '#A0A1A6'
+    BtnGhostHoverBg    = '#232536'; LinkFg           = '#60A5FA'
+    CodeBg             = '#1E3A5F'; CodeFg           = '#93C5FD'
+    CodeBlockBg        = '#0F172A'; CodeBlockFg      = '#E2E8F0'
+    TableBg            = '#334155'; TableHeaderBg    = '#475569'
+    TableAltBg         = '#3B4A5E'; TableBorder      = '#475569'
+    LinkFg             = '#60A5FA'
+    BlockquoteBg       = '#1E3A5F'; BlockquoteFg     = '#93C5FD'
+    BulletFg           = '#60A5FA'; IconBg           = '#1E3A5F'; IconFg  = '#60A5FA'
+    H4Fg               = '#93C5FD'; HeadingFg        = '#F1F5F9'; BodyFg  = '#E2E8F0'
+    UnderlineFg        = '#60A5FA'
+    TabAccentBg        = '#60A5FA'; TabAccentText    = '#FFFFFF'
+    TabInactiveBg      = '#1E293B'; TabInactiveBorder = '#475569'; TabInactiveText = '#94A3B8'
+    TabHoverBg         = '#334155'
+}
+Set-Theme -Window $Window -IsDark $true   # uses $darkTokens internally
+```
 
+`Set-Theme -IsDark $false` restores every value to its light-mode seed. Always pair the two functions so toggling is symmetric. The canonical implementation lives in `templates/wpf-gui-tool.template.ps1` (function `Set-Theme` using `Remove + Add`) — copy that pattern, do not retype from the snippet above.
 ## Spacing Rules
 
 These are **non-negotiable values** — every tool uses them:
@@ -218,3 +203,27 @@ Match icon size to context:
 All icons are `<Path>` elements with SVG `Data="..."`. Never use Segoe Fluent Icons / symbol fonts — they don't exist on Windows Server by default.
 
 See `references/icons.md` for the standard icon set (sun, moon, settings, power, info, etc.) with verified SVG path data.
+## Extended Token Families (PSWrap parity - 2026-08-23)
+
+Sourced from PSWrap `src/WpfHelpers.ps1`. Seeded in `wpf-gui-tool.template.ps1` LightTokens/DarkTokens; consumed by data-heavy tool styles (code blocks, tables, tabs, markdown About rendering).
+
+| Token | Light | Dark | Use |
+|-------|-------|------|-----|
+| BtnGhostHoverBg | #F1F5F9 | #232536 | Ghost button hover fill |
+| LinkFg | #3B82F6 | #60A5FA | Hyperlinks, markdown links |
+| CodeBg / CodeFg | #EFF6FF / #1D4ED8 | #1E3A5F / #93C5FD | Inline code chips |
+| CodeBlockBg / CodeBlockFg | #1E293B / #E2E8F0 | #0F172A / #E2E8F0 | Terminal/code blocks |
+| TableBg | #FFFFFF | #334155 | DataGrid background |
+| TableHeaderBg | #F1F5F9 | #475569 | Grid header row |
+| TableAltBg | #F8FAFC | #3B4A5E | Alternating rows |
+| TableBorder | #E2E8F0 | #475569 | Grid lines |
+| BlockquoteBg / BlockquoteFg | #F0F9FF / #1E40AF | #1E3A5F / #93C5FD | Markdown quotes |
+| BulletFg | #3B82F6 | #60A5FA | List bullets |
+| IconBg / IconFg | #DBEAFE / #1D4ED8 | #1E3A5F / #60A5FA | Icon circles/tiles |
+| HeadingFg / BodyFg / H4Fg | #0F172A / #334155 / #1D4ED8 | #F1F5F9 / #E2E8F0 / #93C5FD | Markdown headings/body |
+| UnderlineFg | #3B82F6 | #60A5FA | Markdown link underline |
+| TabAccentBg / TabAccentText | #3B82F6 / #FFFFFF | #60A5FA / #FFFFFF | Active tab |
+| TabInactiveBg / TabInactiveBorder / TabInactiveText | #F8FAFC / #E2E8F0 / #64748B | #1E293B / #475569 / #94A3B8 | Inactive tab |
+| TabHoverBg | #F1F5F9 | #334155 | Tab hover |
+
+Also adopted from PSWrap: `Invoke-SafeUIAction` (dispatcher-safe scriptblock runner) and `Format-FileSize` now ship in wpf-gui-tool.template.ps1.

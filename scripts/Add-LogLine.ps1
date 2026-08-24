@@ -49,8 +49,8 @@ $ErrorActionPreference = 'Stop'
 # --- Logging Initialization (GUI) -------------------------------------------
 if (-not $ToolName) { $ToolName = 'PowerShellApp' }
 $script:LogDir = Join-Path $env:LOCALAPPDATA "$ToolName\Logs"
-if (-not (Test-Path -Path $script:LogDir)) {
-    $null = New-Item -ItemType Directory -Path $script:LogDir -Force -ErrorAction SilentlyContinue -WhatIf:$false
+if (-not (Test-Path -LiteralPath $script:LogDir)) {
+    try { $null = [System.IO.Directory]::CreateDirectory($script:LogDir) } catch [System.Exception] { Write-Host "Log dir unavailable: $($_.Exception.Message)" -ForegroundColor DarkGray }
 }
 $script:LogFile = Join-Path $script:LogDir "$ToolName`_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
 $script:lastLogKey = $null
@@ -75,7 +75,7 @@ function Add-LogLine {
     $logLine = "[$timestamp] [$Level] $Message"
 
     # File output
-    Add-Content -Path $script:LogFile -Value $logLine -Encoding UTF8 -ErrorAction SilentlyContinue -WhatIf:$false
+    Add-Content -LiteralPath $script:LogFile -Value $logLine -Encoding UTF8 -ErrorAction SilentlyContinue -WhatIf:$false
 
     # Console output — Tailwind Slate log palette
     $color = switch ($Level) {
@@ -86,6 +86,9 @@ function Add-LogLine {
         'ERROR'   { 'Red' }
     }
     Write-Host $logLine -ForegroundColor $color
+
+    # Live log-viewer bridge (Pattern E): notify subscriber with entry parts.
+    if ($script:OnLogEntry) { & $script:OnLogEntry -Timestamp $timestamp -Level $Level -Message $Message }
 
     # Status bar update (if UI control is bound)
     if ($script:lblStatusText -and $script:lblStatusText.Dispatcher) {

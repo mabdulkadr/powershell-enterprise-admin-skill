@@ -1,6 +1,6 @@
 ---
 name: powershell-enterprise-admin
-description: Build production-grade enterprise PowerShell tools: WPF GUI apps with Tailwind Slate dark/light theming, Intune Proactive Remediation detection/remediation pairs, Microsoft Graph / Entra ID / Azure AD automation, and enterprise CLI scripts for Active Directory bulk operations, WinRM multi-device execution, CIM/WMI inventory, event log analysis, printer management, and macOS bash for Intune. Use this skill whenever the user wants a helpdesk tool, WPF app, dashboard, DataGrid UI, dark mode toggle, compliance script, notification runbook with email alerts, CSV-driven AD operations, or a professional README — even if they phrase it casually like "make me a tool" or mention Intune or file paths without saying skill. Do NOT use for simple one-liners, non-PowerShell languages like python or javascript or React, or conceptual explanations without code generation.
+description: 'Build production-grade PowerShell tools with Tailwind Slate WPF GUI, Intune Proactive Remediation pairs, and Graph/Entra ID automation. Handles AD bulk ops, WinRM, CIM inventory, event logs, printer management, and macOS bash. Use for helpdesk tools, dashboards, DataGrid UIs, dark/light theme, compliance scripts, notification runbooks, CSV-driven AD, or professional READMEs — even when phrased casually like ''make me a tool''. Skip for one-liners, non-PowerShell languages, or conceptual explanations.'
 ---
 
 # PowerShell Enterprise Admin
@@ -140,7 +140,7 @@ Long-context models drift: they write a 1,400-line GUI and quietly mint `Primary
 | 8 | **THREAD LAW** — NEVER block the WPF dispatcher. Long ops use `[powershell]::BeginInvoke()` + `DispatcherTimer` (350ms poll). Data load uses `Start-Job` + `DispatcherTimer` (300ms poll) | A blocked UI thread = frozen window. The user thinks the tool crashed. They click again. Now you have a second operation racing the first. |
 | 9 | **AMPERSAND LAW** — Every `&` in XAML text/attributes MUST be `&amp;`. Unescaped `&` causes `XamlParseException` | This is a silent crash at ShowDialog. The XAML parses but the renderer fails. Test with `XamlReader.Parse()` to catch it before runtime. |
 | 10 | **STATICRESOURCE LAW** — Every `{StaticResource X}` MUST have a matching `<Style x:Key="X">` in `Window.Resources`. Missing key = crash at `ShowDialog()` | Same silent crash as Law 9. The parse succeeds, the runtime fails. Use `DynamicResource` when the key may not exist at compile time. |
-| 11 | **LANGUAGE & BRANDING LAW** — All generated scripts, comments, headers, log messages, and README.md must be **English only**. Never emit Arabic, mixed-language, or external branding (e.g., `IntuneAutomation.com`) in code or docs. Use generic `.AUTHOR AI Generated` and internal references (`references/_header-canonical.md`) | Enterprise scripts run on English OS locales, Intune, and Git; non-ASCII breaks parsers, grep, and CI. External branding leaks training examples and confuses ownership. |
+| 11 | **LANGUAGE & BRANDING LAW** — All generated scripts, comments, headers, log messages, and README.md must be **English only**. Never emit Arabic, mixed-language, or external branding (e.g., `IntuneAutomation.com`) in code or docs. `.AUTHOR` resolves at build time: `git config user.name` when discoverable, otherwise the literal `AI Generated`; use internal references (`references/_header-canonical.md`) | Enterprise scripts run on English OS locales, Intune, and Git; non-ASCII breaks parsers, grep, and CI. External branding leaks training examples and confuses ownership. |
 | 12 | **REPORT PATH LAW** — Default `OutputPath`/`Reports` must be **beside the original script**, never `".\Reports"` or `Get-Location` alone. Use `$PSScriptRoot` with dot-source fallback: `$scriptBase = if ($PSScriptRoot) { $PSScriptRoot } elseif ($PSCommandPath) { Split-Path -Parent $PSCommandPath } elseif ($MyInvocation.MyCommand.Path) { Split-Path -Parent $MyInvocation.MyCommand.Path } else { (Get-Location).Path }; Join-Path $scriptBase "Reports"` and normalize with `if (-not $PSBoundParameters.ContainsKey('OutputPath')) { $OutputPath = Join-Path $scriptBase "Reports" }` | `. 'path\to\script.ps1'` leaves `$PSScriptRoot=''` → `Join-Path '' 'Reports'` crashes with `ParameterBindingValidationException`. Beside-script guarantees the report is found where the operator expects it, regardless of caller's `cd`. |
 
 ---
@@ -309,12 +309,32 @@ Window (WindowStyle="SingleBorderWindow", ResizeMode="CanResizeWithGrip")
 
 ## Workflow: Building a New Tool
 
-### Tier 1 (Single-File — Most Tools)
+### Template Library — Copy First, Customize Second (TEMPLATE LOCK)
 
-0. **Pre-flight gate (do not skip, especially deep into a long session):** re-open `references/xaml-styles.md`, `references/design-tokens.md`, `references/icons.md` (GUI) or the relevant CLI reference (CLI) *immediately before writing code*. Styles, tokens, icons, and logging helpers are COPIED from these files verbatim. Writing them from memory is how naming drift happens — invented style keys, symbol-font glyphs, off-canon colors — even when the rules were read earlier in the session.
-1. Create `[ToolName].ps1` with the canonical header (TITLE, SYNOPSIS, DESCRIPTION, PARAMETER, EXAMPLE, NOTES)
+Every deliverable starts from a copy-paste-ready scaffold in `templates/` — never from an empty file:
+
+| Deliverable | Copy |
+|-------------|------|
+| Type 2 detection / remediation | `templates/intune-detect.template.ps1` / `templates/intune-remediate.template.ps1` |
+| Type 2 notification runbook | `templates/intune-notification.template.ps1` |
+| Type 3 general CLI tool | `templates/cli-tool.template.ps1` |
+| Type 1 WPF GUI tool (Tier 1) | `templates/wpf-gui-tool.template.ps1` (all 19 styles included) |
+| macOS bash script | `templates/macos-script.template.sh` |
+| READMEs (4 variants) | `templates/readme-*.template.md` |
+
+**LOCK rules:** keep the skeleton (header order, logging block, exit paths, guards,
+lifecycle) intact — extend it, never rewrite it; customize only `[Placeholders]` and
+`TODO:` regions; every generated `.ps1` must pass `scripts/Test-ToolCompliance.ps1`
+(the templates themselves pass it — staying close to the template IS compliance).
+Full guide: `templates/README.md`.
+
+### Tier 1 (Single-File - Most Tools)
+
+0. **Pre-flight gate (do not skip, especially deep into a long session):** re-open `references/xaml-styles.md`, `references/design-tokens.md`, `references/icons.md` (GUI) or the relevant CLI reference (CLI) *immediately before writing code*. Styles, tokens, icons, and logging helpers are COPIED from these files verbatim. Writing them from memory is how naming drift happens - invented style keys, symbol-font glyphs, off-canon colors - even when the rules were read earlier in the session.
+0b. **Copy the template:** start from `templates/wpf-gui-tool.template.ps1` (it already contains the header shape below, Add-LogLine verbatim, all 19 styles, theme init, guards, and lifecycle) — then fill `[Placeholders]` and `TODO:` regions only.
+1. If building without the template: create `[ToolName].ps1` with the canonical header (TITLE, SYNOPSIS, DESCRIPTION, PARAMETER, EXAMPLE, NOTES)
 2. Add the required building blocks in this order:
-   - `#Requires -Version 5.1` (immediately after the help block from step 1 — never before it) + `[CmdletBinding()]` + params
+   - `#Requires -Version 5.1` (immediately after the help block from step 1 - never before it) + `[CmdletBinding()]` + params
    - `$ErrorActionPreference = 'Stop'`
    - STA check + auto-restart
    - `Add-LogLine` function (console + file)
@@ -340,7 +360,21 @@ See `references/file-architecture.md` for the full structure.
 
 Before writing, classify the script using the **Script Type Routing** decision tree above.
 
-1. Use `references/script-template.md` for the canonical header and the **Description & Comment Writing Standards** (section 17 of that file: .DESCRIPTION quality bar, HelpMessage, intent-labeled examples, graceful elevation degradation, structured per-target results)
+> **⚡ Fast Track (default path - keep builds under ~6 operations):**
+> 1. Read ONLY `<skill>/lessons-learned.md` (tail) + the ONE matching template (+ readme variant if documentation is requested).
+> 2. Templates are self-contained: header shape, logging block, elevation guard, and lifecycle are embedded verbatim - do NOT re-read `scripts/Write-Log.ps1`, `_header-canonical.md`, or full references for standard builds.
+> 3. References are deep-dive material for unusual requirements only (AD/WinRM/event-log domains, Graph batching, GUI styling beyond the template).
+> 4. Resolve `.AUTHOR` once at build start: `git config user.name` when discoverable, otherwise `AI Generated` - apply it to the header AND the README Author section.
+> 5. Verify everything with ONE command: `scripts/Test-Delivery.ps1 -ScriptPath <tool.ps1> -ReadmePath <README.md> -SmokeTest`.
+
+**Inline Documentation Standard (mandatory in EVERY generated script - Type 1 GUI, Type 2 Intune, Type 3 CLI, and macOS `.sh` alike):**
+- One short line under each `# ====` section banner naming that section's responsibility (config/logging, elevation, work functions, MAIN flow).
+- One imperative one-liner above every function: what it does or returns (`# Sets/removes DisabledComponents under ShouldProcess; idempotent result object.`).
+- Inline `# why` comments reserved for non-obvious mechanics only - registry semantics, WhatIf/preference propagation, exit-code contracts. Never narrate obvious syntax.
+- English only (Law 11); keep comment lines under ~100 characters.
+- macOS/bash scripts follow the identical rule with `#` one-liners above each `func_name() {`.
+
+1. **Copy the matching scaffold first:** `templates/cli-tool.template.ps1` (Type 3), `templates/intune-detect.template.ps1` + `templates/intune-remediate.template.ps1` (Type 2 pair), or `templates/intune-notification.template.ps1` (notification runbook). Then use `references/script-template.md` for the canonical header and the **Description & Comment Writing Standards** (section 17 of that file: .DESCRIPTION quality bar, HelpMessage, intent-labeled examples, graceful elevation degradation, structured per-target results)
 2. **Pick the right reference based on classification:**
    - **Type 2 (Intune/Graph):** → `references/intune-patterns.md` (always) + `references/notification-patterns.md` (if notification script)
    - **Type 3 (General CLI):** → pick by domain:
@@ -397,13 +431,16 @@ The complete production-tested pattern set lives in `references/intune-patterns.
 - [ ] `Release-Action` is in a `finally` block (not after `try`)
 - [ ] Long operations use `Start-Job` or async runspace (never block UI thread)
 - [ ] Background jobs cleaned up on window close
+- [ ] Inline Documentation Standard applied to ALL script types (.ps1 and .sh): section purpose lines + one-liner above every function
 
 ### Identity Lock (automated)
 - [ ] `scripts/Test-ToolCompliance.ps1 -ToolPath <file>` run → **zero FAIL lines**
 - [ ] Zero Segoe MDL2 / Fluent / UI Symbol references (ICON LAW)
 - [ ] GUI: canonical style keys + brush tokens present, no invented aliases
 - [ ] GUI: `$script:lastLogKey` guard present; StatusBar uses `StatusBarText`
+- [ ] Smoke-tested with Windows PowerShell 5.1 (`powershell.exe -File tool.ps1 -WhatIf`) - pwsh-only success is NOT proof; standalone `[HelpMessage()]` parses on pwsh 7 but crashes 5.1 (`scripts/Test-Delivery.ps1 -SmokeTest` automates this)
 - [ ] README has shields.io badges + Disclaimer section
+- [ ] README carries `## License` / `## Disclaimer` sections - a short emoji prefix is allowed (`## 📜 License`, `## ⚠ Disclaimer`); the gate regex tolerates up to 4 symbol characters between `##` and the keyword
 
 For the **full PS 5.1 pitfalls list** (Thumb.CornerRadius, Join-Path, Pester 3.4, ampersand crashes, etc.), see `references/pitfalls.md`.
 
@@ -413,7 +450,21 @@ For the **full PS 5.1 pitfalls list** (Thumb.CornerRadius, Join-Path, Pester 3.4
 
 Every PowerShell project needs a clear README. **Canonical templates live in `references/readme-template.md`** (4 variants: Basic, Intune Remediation, WPF GUI, CLI Script — ~70% shared).
 
-**Use:** pick the variant matching script type, **paste the variant template as the README's starting skeleton**, then replace `[Placeholders]` — never write a README from scratch. Keep order: Badges → Overview → Features → Structure → Scripts (Purpose/Logic/Exit Codes/Example) → Requirements → Intune Deployment (if pair) → Typical Workflow → Operational Notes → Disclaimer (mandatory: as-is, test in staging) → License → Author.
+**Use:** pick the variant matching script type, **paste the variant template as the README's starting skeleton**, then replace `[Placeholders]` — never write a README from scratch. The template is the **minimum baseline** — every README must contain *at least* those sections in that order; you **MAY extend** with additional project-specific sections when the project warrants it (e.g., Architecture, Troubleshooting, FAQ, Changelog, Screenshots, Performance, Security Considerations) provided they follow the same design language (shields.io badges, emoji headings, tables for structured data, ```powershell/```text fences, `---` separators). Keep core order: Badges → Overview → Features → Structure → Scripts (Purpose/Logic/Exit Codes/Example) → Requirements → Intune Deployment (if pair) → Typical Workflow → [Optional Extended Sections] → Operational Notes → Disclaimer (mandatory: as-is, test in staging) → License → Author. Never remove or reorder mandatory sections to make room for extras.
+
+**Smart sectioning — sections are conditional on script type, never fixed.** Include a section only when its row says ✅:
+
+| Section | Type 1 GUI | Type 2 Intune pair | Type 3 CLI |
+|---------|:---:|:---:|:---:|
+| 🧭 Intune Deployment + Recommended Settings | ❌ | ✅ only here | ❌ |
+| 🔧 Typical Workflow (detection → remediation flow) | ❌ | ✅ only here | ❌ |
+| 🖥️ Usage / Screenshots / Theme notes | ✅ | ❌ | ❌ |
+| ⚙️ Parameters table | optional | optional | ✅ |
+| 🛡 Operational Notes | ✅ | ✅ | ✅ |
+| ⚠ Disclaimer | ✅ | ✅ | ✅ |
+| Badges (`Intune` badge, `UI/Theme` badge) | UI+Theme only | Intune only | Mode only |
+
+A multi-tool "suite" README documents each script's own scope — an Intune Deployment section covering tools that are not Intune scripts fails review.
 
 These elements are non-negotiable in every variant — models writing from scratch reliably skip them:
 
@@ -426,14 +477,19 @@ These elements are non-negotiable in every variant — models writing from scrat
 ```markdown
 ## Disclaimer
 
-This script is provided as-is with no warranty of any kind. Test it in a
-staging environment before deploying to production. The author assumes no
-liability for any damage or data loss resulting from its use.
+This skill and every script it generates are provided as-is with no warranty
+of any kind. Test generated tools in a staging environment before deploying to
+production. The authors assume no liability for any damage or data loss
+resulting from their use.
 ```
+
+This wording is canonical — copy it verbatim; do not paraphrase or shorten it.
 
 A README without shields.io badges or a Disclaimer section fails review even when everything else is perfect.
 
 **Key principles:** shields.io badges (`License`, `PowerShell 5.1+`, `Platform`, `Intune` if pair), emojis for scan, tables for exit codes/settings, ` ```powershell` + ` ```text` language tags, `---` between sections.
+
+**Visual Identity — Variable Header, Fixed Body:** The header emoji (`# <emoji> Title`) is **variable per project/script name** (e.g., 🏢 AD, 📊 Report, 🛡️ Intune, 🪟 Windows, 🖥️ GUI, ☁️ M365 — see `references/readme-template.md` Icon Policy mapping). All other section icons are **fixed** as the skill's unified signature: `📖 Overview, ✨ Features, 📂 Structure, 🚀 Usage, ⚙️ Requirements/Parameters, 🧰 Core Commands, 🔍 Troubleshooting, ❓ FAQ, 🛡 Operational Notes, 📜 License, 👤 Author, ⚠ Disclaimer` + footer `⭐` + optional `> Built with **PowerShell Enterprise Admin**`. This fixed set + shields.io badges makes any README instantly recognizable as this skill's work.
 
 Full templates + badge reference + section examples → `references/readme-template.md` (canonical). Also see `references/_header-canonical.md` for header consistency.
 
@@ -475,7 +531,7 @@ This skill learns from its own mistakes. The **Lessons Learned Register** lives 
 
 Then:
 
-4. **`scripts/`** — Canonical implementations, copy verbatim: `Add-LogLine.ps1` (GUI), `Write-Log.ps1` (CLI + `Initialize-Log`/`Finish-Script`), `Guard-Action.ps1` (Pattern H), `Get-MgGraphAllPages.ps1`, `Invoke-GraphRequestWithRetry.ps1`, `Invoke-GraphBatchRequest.ps1`, `Get-Graph403Message.ps1`, `ConvertTo-SafeDateTime.ps1`, `Connect-GraphAuth.ps1`, `Test-XamlFile.ps1`, `Test-Skill.ps1` (skill self-test), plus PSWrap-style `Embed-Xaml.ps1` for embedded XAML build step
+4. **`scripts/`** — Canonical implementations, copy verbatim: `Add-LogLine.ps1` (GUI), `Write-Log.ps1` (CLI + `Initialize-Log`/`Finish-Script`), `Guard-Action.ps1` (Pattern H), `Get-MgGraphAllPages.ps1`, `Invoke-GraphRequestWithRetry.ps1`, `Invoke-GraphBatchRequest.ps1`, `Get-Graph403Message.ps1`, `ConvertTo-SafeDateTime.ps1`, `Connect-GraphAuth.ps1`, `Test-XamlFile.ps1`, `Test-Skill.ps1` (skill self-test), `Test-Delivery.ps1` (one-shot delivery verifier: parser + compliance + PS 5.1 smoke test), plus PSWrap-style `Embed-Xaml.ps1` for embedded XAML build step
 5. **`references/file-architecture.md`** — Tier 1/2/3 folder structures + complete Tier 1 bootstrap code + **PSWrap Tier 3 reference (embedded XAML, console-hide, AppConstants)**
 6. **`references/design-tokens.md`** — Complete Tailwind Slate color tokens + light/dark overrides + spacing + typography (canonical for `SKILL.md` Design System)
 7. **`references/xaml-styles.md`** — Full XAML for every required style (BtnBase hierarchy, Card, StatCard, InputBox, NavBtnBase, StyledCheckBox, StyledComboBox, LiveMessageCenterBox, SessionCard)
@@ -493,6 +549,7 @@ Then:
 19. **`references/lessons-learned.md`** — Lessons Learned Register format, triggers, and worked example
 20. **`references/advanced-capabilities.md`** — Communication Style + advanced scenarios (multi-window tools, REST API backends, self-updating tools, bulk operations, plugin architecture)
 21. **`references/exe-packaging.md`** — Ship as .exe: PSWrap CodeDOM compilation, Authenticode signing, icon embedding, companion bundling, PSGallery publishing
+22. **`templates/`** - Copy-paste-ready scaffolds for every deliverable (Intune detect/remediate/notification, CLI, WPF GUI with all 19 styles, macOS, 4 README variants) + guide. TEMPLATE LOCK: copy first, customize placeholders only
 
 ---
 
@@ -528,7 +585,7 @@ Presentation principles (precise summaries, pattern references, honest trade-off
 
 ## Quick Recap
 
-1. **Always copy the scaffold**, never write from scratch
+1. **Always copy the scaffold from `templates/`**, never write from scratch - and never deviate: keep the skeleton, fill only placeholders/TODOs, then prove compliance with `Test-ToolCompliance.ps1`
 2. **Follow the 12 Laws** — they prevent 100% of the recurring bugs
 3. **Use the 21 patterns** — every one has been battle-tested
 4. **Stick to Tailwind Slate tokens** — light/dark theme is automatic when you do

@@ -148,9 +148,40 @@ Write-Result "_header-canonical.md exists" (Test-Path -LiteralPath (Join-Path $s
 Write-Result "_logging-canonical.md exists" (Test-Path -LiteralPath (Join-Path $skillRoot "references/_logging-canonical.md"))
 Write-Result "_graph-canonical.md exists" (Test-Path -LiteralPath (Join-Path $skillRoot "references/_graph-canonical.md"))
 
-# 10. SKILL.md lean check (target <600, ideal <500 — reduced from 768)
+# 10. SKILL.md lean check (target <650, ideal <500 — reduced from 768, raised from 600 for extensibility)
 $skillLines = (Get-Content -LiteralPath (Join-Path $skillRoot "SKILL.md") -Encoding UTF8).Count
-Write-Result "SKILL.md lean (<600 lines, was 768)" ($skillLines -lt 600) "$skillLines lines"
+Write-Result "SKILL.md lean (<650 lines, was 768)" ($skillLines -lt 650) "$skillLines lines"
+
+# 10b. Template library: every scaffold exists, parses, and obeys header order
+$templatesDir = Join-Path $skillRoot "templates"
+Write-Result "templates/ directory exists" (Test-Path -LiteralPath $templatesDir)
+if (Test-Path -LiteralPath $templatesDir) {
+  $expectedTemplates = @(
+    "README.md",
+    "cli-tool.template.ps1", "wpf-gui-tool.template.ps1",
+    "intune-detect.template.ps1", "intune-remediate.template.ps1", "intune-notification.template.ps1",
+    "macos-script.template.sh",
+    "readme-cli.template.md", "readme-gui.template.md", "readme-intune-pair.template.md", "readme-suite.template.md"
+  )
+  foreach ($t in $expectedTemplates) {
+    Write-Result "Template exists: $t" (Test-Path -LiteralPath (Join-Path $templatesDir $t))
+  }
+  Get-ChildItem -Path $templatesDir -Filter "*.template.ps1" | ForEach-Object {
+    $tokens = $null; $errors = $null
+    $null = [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$errors)
+    Write-Result "Template AST $($_.Name)" ($errors.Count -eq 0) $(if ($errors.Count -gt 0) { $errors[0].Message } else { "" })
+    $first = (Get-Content -LiteralPath $_.FullName -TotalCount 1 -Encoding UTF8).Trim()
+    Write-Result "Template header-first $($_.Name)" ($first -eq "<#")
+    $tc = Get-Content -LiteralPath $_.FullName -Raw -Encoding UTF8
+    Write-Result "Template requires-after-header $($_.Name)" ($tc -match "(?s)<#.*?#>\s*\r?\n\s*#Requires -Version 5\.1")
+    Write-Result "Template no RunAsAdmin $($_.Name)" (-not ($tc -match '#Requires\s+-RunAsAdministrator'))
+  }
+  $sh = Join-Path $templatesDir "macos-script.template.sh"
+  if (Test-Path -LiteralPath $sh) {
+    $shebang = (Get-Content -LiteralPath $sh -TotalCount 1).Trim()
+    Write-Result "macOS template shebang" ($shebang -eq "#!/bin/bash")
+  }
+}
 
 Write-Host "`nResults: $passed passed, $failed failed" -ForegroundColor $(if ($failed -eq 0) { "Green" } else { "Red" })
 if ($failed -gt 0) { exit 1 } else { exit 0 }

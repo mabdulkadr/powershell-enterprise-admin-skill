@@ -1,15 +1,10 @@
 # ⚡ PowerShell Enterprise Admin – Production Design & Automation Standard for AI Agents
 
-![OpenCode Skill](https://img.shields.io/badge/OpenCode-Skill-0066CC?style=flat&logo=codefactor&logoColor=white)
 ![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-5391FE?style=flat&logo=powershell&logoColor=white)
-![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-blue?style=flat)
+![Platform](https://img.shields.io/badge/Platform-Windows-blue?style=flat)
 ![UI](https://img.shields.io/badge/UI-WPF%20%2F%20XAML-9B2335?style=flat&logo=windows&logoColor=white)
-![Intune](https://img.shields.io/badge/Intune-Proactive%20Remediations-0078D4?style=flat&logo=microsoftazure&logoColor=white)
-![Design System](https://img.shields.io/badge/Design-Tailwind%20Slate-0EA5E9?style=flat&logo=tailwindcss&logoColor=white)
-![Tests](https://img.shields.io/badge/Self--Test-50%2F50%20PASS-brightgreen?style=flat)
 ![Evals](https://img.shields.io/badge/Evals-25%20Scenarios-orange?style=flat)
 ![License](https://img.shields.io/badge/License-MIT-yellow?style=flat)
-[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-FFDD00?style=flat&logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/mabdulkadrx)
 
 ---
 
@@ -87,14 +82,16 @@ graph TD
 
 # 💻 Platform Compatibility Matrix
 
-| Operating System | PowerShell | WPF GUI (Type 1) | Intune Remediation (Type 2) | Enterprise CLI (Type 3) |
-| :--- | :---: | :---: | :---: | :---: |
-| Windows 11 (22H2–24H2) | 5.1 / 7.4+ | ✅ Full | ✅ Full | ✅ Full |
-| Windows 10 (21H2–22H2) | 5.1 / 7.4+ | ✅ Full | ✅ Full | ✅ Full |
-| Windows Server 2025/2022 | 5.1 / 7.4+ | ✅ Desktop Experience | ⚠️ Hybrid Azure Arc | ✅ Full |
-| Windows Server 2019/2016 | 5.1 | ✅ SVG icons only | ⚠️ Hybrid Azure Arc | ✅ Full |
-| macOS (Sonoma / Sequoia) | Bash 3.2+ / zsh | ❌ n/a | ✅ Via Intune macOS | ✅ Shell |
-| Azure Automation | 5.1 / 7.2 | ❌ Headless | ✅ Runbooks | ✅ Hybrid Worker |
+> Canonical matrix lives in `SKILL.md` → `Enterprise Platform & Compatibility Matrix` and `references/_graph-canonical.md`. This table is a synchronized summary.
+
+| Operating System | PowerShell Version | WPF GUI (Type 1) | Intune Remediation (Type 2) | Enterprise CLI (Type 3) | Notes |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **Windows 11 (22H2–24H2)** | 5.1 / 7.4+ | ✅ Full Support | ✅ Full Support | ✅ Full Support | Modern WinRT toasts & native STA WPF. |
+| **Windows 10 (21H2–22H2)** | 5.1 / 7.4+ | ✅ Full Support | ✅ Full Support | ✅ Full Support | Standard enterprise client base. |
+| **Windows Server 2025/2022** | 5.1 / 7.4+ | ✅ Full Support | ⚠️ Hybrid Azure Arc | ✅ Full Support | Server Desktop Experience required for WPF. |
+| **Windows Server 2019/2016** | 5.1 | ✅ Full Support | ⚠️ Hybrid Azure Arc | ✅ Full Support | Uses SVG paths; no Segoe Fluent dependency. |
+| **macOS (Sonoma / Sequoia)** | Bash 3.2+ / zsh | ❌ n/a | ✅ Via Intune macOS | ✅ macOS Shell | Follows `references/macos-patterns.md`. |
+| **Azure Automation Cloud** | 5.1 / 7.2 | ❌ Headless | ✅ Runbooks | ✅ Hybrid Worker | Strict 400MB RAM / 3hr runtime limits. |
 
 ---
 
@@ -186,20 +183,21 @@ powershell-enterprise-admin/
  ├── CHANGELOG.md                      # Release history (Keep a Changelog)
  ├── lessons-learned.md                # GLOBAL lessons register (travels with the skill)
  │
- ├── scripts/                          # 13 canonical modules & quality gates
- │   ├── Add-LogLine.ps1               # GUI logging (duplicate guard + disk file + UI)
- │   ├── Write-Log.ps1                 # CLI logging (Initialize-Log / Write-Log / Finish-Script)
- │   ├── Guard-Action.ps1             # Pattern H: atomic button busy guard
- │   ├── Get-MgGraphAllPages.ps1       # Graph @odata.nextLink pagination
- │   ├── Invoke-GraphRequestWithRetry.ps1  # 429 Retry-After aware / 5xx exponential backoff
- │   ├── Invoke-GraphBatchRequest.ps1  # $batch engine (20 ops per POST)
- │   ├── Get-Graph403Message.ps1       # 403 → actionable missing-role mapping
- │   ├── ConvertTo-SafeDateTime.ps1    # Culture-safe invariant date parser
- │   ├── Connect-GraphAuth.ps1         # Multi-mode Graph auth matrix
- │   ├── Embed-Xaml.ps1                # Tier 3 build step: GZip+Base64 XAML embedder
- │   ├── Test-XamlFile.ps1             # Dual-engine XAML syntax validator
- │   ├── Test-ToolCompliance.ps1       # Identity Lock compliance gate (CI-ready exit codes)
- │   └── Test-Skill.ps1                # Skill self-test (AST parse, headers, lints)
+  ├── scripts/                          # 14 canonical modules & quality gates
+  │   ├── Add-LogLine.ps1               # GUI logging (duplicate guard + disk file + UI)
+  │   ├── Write-Log.ps1                 # CLI logging (Initialize-Log / Write-Log / Finish-Script)
+  │   ├── Guard-Action.ps1             # Pattern H: atomic button busy guard
+  │   ├── Get-MgGraphAllPages.ps1       # Graph @odata.nextLink pagination
+  │   ├── Invoke-GraphRequestWithRetry.ps1  # 429 Retry-After aware / 5xx exponential backoff
+  │   ├── Invoke-GraphBatchRequest.ps1  # $batch engine (20 ops per POST)
+  │   ├── Get-Graph403Message.ps1       # 403 → actionable missing-role mapping
+  │   ├── ConvertTo-SafeDateTime.ps1    # Culture-safe invariant date parser
+  │   ├── Connect-GraphAuth.ps1         # Multi-mode Graph auth matrix
+  │   ├── Embed-Xaml.ps1                # Tier 3 build step: GZip+Base64 XAML embedder
+  │   ├── Test-XamlFile.ps1             # Dual-engine XAML syntax validator
+  │   ├── Test-ToolCompliance.ps1       # Identity Lock compliance gate (CI-ready exit codes)
+  │   ├── Test-Skill.ps1                # Skill self-test (AST parse, headers, lints)
+  │   └── Test-Delivery.ps1             # One-shot delivery verifier (parser + compliance + PS 5.1 smoke test)
  │
  ├── references/                       # 20 architecture & domain guides
  │   ├── _header-canonical.md          # Single source: header field order
@@ -214,20 +212,16 @@ powershell-enterprise-admin/
  │   ├── script-template.md            # CLI headers, ShouldProcess, quality bars
  │   ├── intune-patterns.md            # Remediation pairs, Graph patterns, LAW ingestion
  │   ├── notification-patterns.md      # Azure Automation runbooks + HTML email alerts
- │   ├── ad-patterns.md                # Active Directory management
- │   ├── winrm-patterns.md             # Multi-node remote management
- │   ├── event-log-patterns.md         # High-performance event log queries
-│   ├── ad-patterns.md                # Active Directory management
-│   ├── winrm-patterns.md             # Multi-node remote management
-│   ├── event-log-patterns.md         # High-performance event log queries
-│   ├── macos-patterns.md             # Enterprise bash for macOS
+  │   ├── ad-patterns.md                # Active Directory management
+  │   ├── winrm-patterns.md             # Multi-node remote management
+  │   ├── event-log-patterns.md         # High-performance event log queries
+  │   ├── macos-patterns.md             # Enterprise bash for macOS
 │   ├── readme-template.md            # 4 professional README variants
 │   ├── exe-packaging.md              # Compile to EXE, code signing, icons, PSGallery
 │   ├── advanced-capabilities.md      # Communication style + advanced scenarios
 │   └── lessons-learned.md            # Register format, triggers, worked example
- │
- ├── .github/workflows/               # CI: skill self-test + compliance gate on push/PR
- └── evals/
+  │
+  └── evals/
      └── evals.json                    # 25 scenario evaluation test cases
 ```
 
@@ -359,4 +353,4 @@ This skill and every script it generates are provided as-is with no warranty of 
 
 ---
 
-⭐ If this project helps you build better tools faster, please give it a star! ⭐
+⭐ If this project was helpful, please consider starring the repository — your support helps sustain development and helps others discover it. ⭐

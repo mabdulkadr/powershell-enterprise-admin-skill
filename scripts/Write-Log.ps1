@@ -7,7 +7,8 @@
 
 .DESCRIPTION
     The single source of truth for CLI script logging (Intune remediation/detection, AD, WinRM, event logs).
-    Provides Initialize-Log, Write-Log, and Finish-Script helpers with standardized formatting.
+    Provides Initialize-Log, Write-Banner, Write-Log, and Finish-Script helpers with standardized formatting.
+    Write-Banner reads $SolutionName and $ScriptMode from the caller's scope (set by every template before dot-sourcing).
 
 .PARAMETER ExitCode
     Process exit code to terminate with (0=success/compliant, 1=failure/non-compliant, 2=script error).
@@ -46,6 +47,7 @@
 
 .EXAMPLE
     $script:LogReady = Initialize-Log -SolutionName 'BitLockerRemediation' -ScriptMode 'detect'
+    Write-Banner
     Write-Log -Message 'Starting detection' -Level 'INFO'
     Finish-Script -ExitCode 0 -Message 'Compliant' -Level 'SUCCESS'
 #>
@@ -79,11 +81,11 @@ function Initialize-Log {
             $script:LogFile = Join-Path $script:LogRoot "$SolutionName`_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
         }
 
-        if (-not (Test-Path -Path $script:LogRoot)) {
-            $null = New-Item -Path $script:LogRoot -ItemType Directory -Force -ErrorAction Stop -WhatIf:$false
+        if (-not (Test-Path -LiteralPath $script:LogRoot)) {
+            $null = [System.IO.Directory]::CreateDirectory($script:LogRoot)
         }
-        if (-not (Test-Path -Path $script:LogFile)) {
-            $null = New-Item -Path $script:LogFile -ItemType File -Force -ErrorAction Stop -WhatIf:$false
+        if (-not (Test-Path -LiteralPath $script:LogFile)) {
+            $null = [System.IO.File]::Create($script:LogFile).Dispose()
         }
 
         $script:LogReady = $true
@@ -93,6 +95,28 @@ function Initialize-Log {
         Write-Host "Log initialization failed: $($_.Exception.Message)" -ForegroundColor Red
         $script:LogReady = $false
         return $false
+    }
+}
+
+function Write-Banner {
+    [CmdletBinding()]
+    [Alias('Show-Banner')]
+    param()
+
+    $title      = '{0} | {1}' -f $SolutionName, $ScriptMode
+    $bannerLine = '=' * 78
+    $lines      = @('', $bannerLine, $title, $bannerLine)
+
+    foreach ($line in $lines) {
+        if ($line -eq $title) {
+            Write-Host $line -ForegroundColor White
+        } else {
+            Write-Host $line -ForegroundColor DarkGray
+        }
+
+        if ($script:LogReady -and $script:LogFile) {
+            Add-Content -LiteralPath $script:LogFile -Value $line -Encoding UTF8 -ErrorAction SilentlyContinue -WhatIf:$false
+        }
     }
 }
 
@@ -118,7 +142,7 @@ function Write-Log {
     Write-Host $logLine -ForegroundColor $color
 
     if ($script:LogReady -and $script:LogFile) {
-        Add-Content -Path $script:LogFile -Value $logLine -Encoding UTF8 -ErrorAction SilentlyContinue -WhatIf:$false
+        Add-Content -LiteralPath $script:LogFile -Value $logLine -Encoding UTF8 -ErrorAction SilentlyContinue -WhatIf:$false
     }
 }
 

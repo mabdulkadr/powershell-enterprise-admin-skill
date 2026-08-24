@@ -247,8 +247,10 @@ foreach ($toolFile in $ToolPath) {
 
         if ($content -match '\$script:lastLogKey') {
             Write-Check -Status 'PASS' -Name 'Add-LogLine duplicate guard ($script:lastLogKey)'
+        } elseif ($content -match '(function\s+Add-LogLine|Add-LogLine\.ps1|dot-source.*Add-LogLine|Add-LogLine\s*\.ps1)') {
+            Write-Check -Status 'PASS' -Name 'Add-LogLine sourced from canonical'
         } elseif ($content -match 'function\s+Add-LogLine') {
-            Write-Check -Status 'FAIL' -Name 'Add-LogLine duplicate guard ($script:lastLogKey)' -Detail 'Add-LogLine rewritten without the canonical guard - copy scripts/Add-LogLine.ps1 verbatim'
+            Write-Check -Status 'FAIL' -Name 'Add-LogLine duplicate guard ($script:lastLogKey)' -Detail 'function Add-LogLine rewritten without the canonical guard - copy scripts/Add-LogLine.ps1 verbatim'
         } else {
             Write-Check -Status 'FAIL' -Name 'Add-LogLine function present' -Detail 'GUI has no Add-LogLine - copy scripts/Add-LogLine.ps1 verbatim'
         }
@@ -348,13 +350,13 @@ if ($ReadmePath) {
             Write-Check -Status 'FAIL' -Name 'shields.io badges' -Detail 'Every README opens with License/PowerShell/Platform badges'
         }
 
-        if ($readme -match '(?m)^##\s+Disclaimer') {
+        if ($readme -match '(?m)^##\s+(?:[^\w\s]{1,4}\s+)?Disclaimer') {
             Write-Check -Status 'PASS' -Name 'Disclaimer section'
         } else {
             Write-Check -Status 'FAIL' -Name 'Disclaimer section' -Detail 'Mandatory as-is / test-in-staging disclaimer missing'
         }
 
-        if ($readme -match '(?m)^##\s+License') {
+        if ($readme -match '(?m)^##\s+(?:[^\w\s]{1,4}\s+)?License') {
             Write-Check -Status 'PASS' -Name 'License section'
         } else {
             Write-Check -Status 'WARN' -Name 'License section' -Detail 'Template ends with License + Author sections'

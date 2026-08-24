@@ -355,22 +355,13 @@ $script:chkSelectAll.Add_Unchecked({
 **Every interactive button** uses this. The `Guard-Action` / `Release-Action` pair prevents concurrent operations that could corrupt state. **The canonical implementation is `scripts/Guard-Action.ps1` — copy it verbatim instead of retyping.**
 
 ```powershell
-# In the .ps1 bootstrap (Tier 1) or WpfHelpers.ps1 (Tier 3)
-function Guard-Action {
-    [CmdletBinding()]
-    param([string]$ActionName)
-    if ($script:isBusy) {
-        Add-LogLine -Message "Operation in progress - please wait: $ActionName" -Level 'WARNING'
-        return $false
-    }
-    $script:isBusy = $true
-    return $true
-}
-function Release-Action { $script:isBusy = $false }
+# Dot-source the canonical implementation — never retype Guard-Action / Release-Action.
+# Path: <skill>/scripts/Guard-Action.ps1
+. "$PSScriptRoot/../scripts/Guard-Action.ps1"
 
 # Usage in every action button:
 $script:BtnAction.Add_Click({
-    if (-not (Guard-Action 'Action Name')) { return }
+    if (-not Guard-Action -ActionName 'Action Name') { return }
     try {
         # ... your logic here ...
         Add-LogLine -Message 'Completed.' -Level 'INFO'
