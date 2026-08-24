@@ -49,7 +49,8 @@ Sections are **variable per script type, not fixed**. Pick the matching variant 
 |---------|:---:|:---:|:---:|
 | 🧭 Intune Deployment + Recommended Settings | ❌ | ✅ only here | ❌ |
 | 🔧 Typical Workflow (detection → remediation flow) | ❌ | ✅ only here | ❌ |
-| 🖥️ Usage / Screenshots / Theme notes | ✅ | ❌ | ❌ |
+| 🖥️ Usage / Theme notes | ✅ | ❌ | ❌ |
+| 🖼️ Screenshots (if images exist) | ✅ directly after Overview | ❌ | ❌ |
 | 🧰 Core Commands | ✅ | ✅ | ✅ |
 | ⚙️ Parameters table | optional | optional | ✅ |
 | Logging section under Requirements | ❌ | ✅ (IntuneLogs path) | ✅ (ProgramData path) |
@@ -59,6 +60,7 @@ Sections are **variable per script type, not fixed**. Pick the matching variant 
 Rules:
 
 - **Never** add `🧭 Intune Deployment` to a GUI or standalone-CLI README — deployment guidance belongs exclusively to the Intune pair's own README.
+- **Screenshots** (when the project has images) sit **directly after the 📖 Overview section** — never buried inside Usage. A README without images simply omits the section.
 - A suite/multi-tool README documents each script at its own scope; it must not carry an Intune Deployment section for non-Intune tools.
 - The template is the **floor, not the ceiling**: every README must contain at least the sections of its chosen variant, in order. You **MAY add** project-specific sections (Architecture, Troubleshooting, FAQ, Changelog, Screenshots, Performance, Security Considerations, etc.) when they add value, using the same visual language (emoji headings, tables, code fences, `---` separators). Insert extended sections **after** Requirements/Workflow but **before** Operational Notes so Author / License / Disclaimer remain last.
 - The ⚠ Disclaimer uses this canonical wording in every variant — copy verbatim:
@@ -82,7 +84,7 @@ The four variant templates define the **minimum** that must be present. For larg
 | Troubleshooting | Known errors, exit code 2 cases, log paths | `## 🔍 Troubleshooting` |
 | FAQ | Repeated helpdesk questions | `## ❓ FAQ` |
 | Changelog | Version history beyond `.CHANGELOG` header | `## 📝 Changelog` |
-| Screenshots / Demo | GUI tools, dashboards | `## 🖼️ Screenshots` |
+| Screenshots / Demo | GUI tools, dashboards — placed **directly after 📖 Overview** | `## 🖼️ Screenshots` |
 | Performance | Large bulk ops, throttling, Graph pagination | `## ⚡ Performance Considerations` |
 | Security | Permissions, least-privilege, secrets handling | `## 🔒 Security Considerations` |
 | API / Graph References | Endpoints, permissions, pagination notes | `## 🔗 API References` |

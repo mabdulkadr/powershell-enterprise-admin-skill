@@ -458,13 +458,14 @@ Every PowerShell project needs a clear README. **Canonical templates live in `re
 |---------|:---:|:---:|:---:|
 | 🧭 Intune Deployment + Recommended Settings | ❌ | ✅ only here | ❌ |
 | 🔧 Typical Workflow (detection → remediation flow) | ❌ | ✅ only here | ❌ |
-| 🖥️ Usage / Screenshots / Theme notes | ✅ | ❌ | ❌ |
+| 🖥️ Usage / Theme notes | ✅ | ❌ | ❌ |
+| 🖼️ Screenshots (if images exist) | ✅ directly after Overview | ❌ | ❌ |
 | ⚙️ Parameters table | optional | optional | ✅ |
 | 🛡 Operational Notes | ✅ | ✅ | ✅ |
 | ⚠ Disclaimer | ✅ | ✅ | ✅ |
 | Badges (`Intune` badge, `UI/Theme` badge) | UI+Theme only | Intune only | Mode only |
 
-A multi-tool "suite" README documents each script's own scope — an Intune Deployment section covering tools that are not Intune scripts fails review.
+A multi-tool "suite" README documents each script's own scope — an Intune Deployment section covering tools that are not Intune scripts fails review. Screenshots, when the project has images, sit **directly after the 📖 Overview section** — omit the section entirely when there are none.
 
 These elements are non-negotiable in every variant — models writing from scratch reliably skip them:
 

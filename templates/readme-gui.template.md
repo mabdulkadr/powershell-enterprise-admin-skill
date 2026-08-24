@@ -23,6 +23,12 @@
 
 [Explain the purpose and use case.]
 
+### 🖼️ Screenshots
+
+![Main Window](images/Screenshot.png)
+
+*[Caption: what the screenshot shows.]*
+
 ---
 
 # ✨ Core Features
@@ -43,7 +49,8 @@
 │
 ├── [ToolName].ps1
 ├── README.md
-└── Screenshot.png (optional)
+└── images/
+    └── Screenshot.png (optional)
 ```
 
 ---
@@ -65,9 +72,6 @@ This section exists ONLY in GUI tool READMEs — never in CLI or Intune pair REA
 
 ### Main Window
 [Describe the interface: pages, sidebar, status bar.]
-
-### Screenshots
-![Main Window](Screenshot.png)
 
 ### Exit Codes
 | Code | Status |
