@@ -40,7 +40,7 @@ This is the skill's single global register - it travels with the skill and appli
 - **Fix:** Added the canonical `Write-Banner` + "Log file ready" DEBUG line to Clear-TempFiles.ps1 (banner title `Temp-Cleaner | Cleanup`); extended the CLI template (functions skeleton + MAIN block) and the SKILL.md Canonical Conventions logging row so every headless script type now opens with a banner.
 - **Rule:** All console scripts open with: banner → "Log file ready" DEBUG → start message. Same shape regardless of Type 2 or Type 3.
 
-## 2026-08-21 | Skill improvement | intuneautomation-header-standard
+## 2026-08-21 | Skill improvement | enterprise-header-standard
 
 - **Mistake:** Skill headers were thin (indented `.SYNOPSIS/.DESCRIPTION/.EXAMPLE` only, or minimal `<#!` metadata) and the CHANGELOG guidance did not require documenting fixes with their cause.
 - **Cause:** No canonical field order existed; each script type invented its own header shape.
@@ -62,9 +62,9 @@ Any unrecognized dotted keyword (.TITLE, .TAGS, ...) anywhere in a comment block
 
 ## 2026-08-21 | DeviceInfo-Suite | branding-and-language
 
-- **Mistake:** Generated scripts and READMEs contained external branding `IntuneAutomation.com` in `.AUTHOR` and mixed Arabic/English text (Arabic in `.SYNOPSIS/.DESCRIPTION`, `HelpMessage`, log messages) despite enterprise standard requiring English-only output.
+- **Mistake:** Generated scripts and READMEs contained external branding `Enterprise Automation.com` in `.AUTHOR` and mixed Arabic/English text (Arabic in `.SYNOPSIS/.DESCRIPTION`, `HelpMessage`, log messages) despite enterprise standard requiring English-only output.
 - **Cause:** Copied header template verbatim from external reference without stripping branding, and mirrored user's Arabic chat language into code/comments assuming localization was desired.
-- **Fix:** Replaced all `IntuneAutomation.com` with generic `AI Generated` and internal references (`references/_header-canonical.md`); rewrote all headers, HelpMessages, and READMEs to 100% English; added LANGUAGE & BRANDING LAW (Law 11) to SKILL.md.
+- **Fix:** Replaced all `Enterprise Automation.com` with generic `AI Generated` and internal references (`references/_header-canonical.md`); rewrote all headers, HelpMessages, and READMEs to 100% English; added LANGUAGE & BRANDING LAW (Law 11) to SKILL.md.
 - **Rule:** Never emit external project branding or non-English text in generated scripts/docs; use generic `.AUTHOR AI Generated` and keep all output English-only unless user explicitly requests localization.
 
 ## 2026-08-21 | DeviceInfo-Suite | report-path-dot-source
@@ -74,18 +74,18 @@ Any unrecognized dotted keyword (.TITLE, .TAGS, ...) anywhere in a comment block
 - **Fix:** Changed default to `$scriptBase = if ($PSScriptRoot) { $PSScriptRoot } elseif ($PSCommandPath) { Split-Path $PSCommandPath } ...` plus `if (-not $PSBoundParameters.ContainsKey('OutputPath')) { $OutputPath = Join-Path $scriptBase "Reports" }`; added REPORT PATH LAW (Law 12) and Pitfall entry with verification for `&`, `.\`, and dot-source from different `pwd`.
 - **Rule:** Default Reports is always beside the original script via `$PSScriptRoot` with `$PSCommandPath`/`$MyInvocation` fallback and `PSBoundParameters` normalization; never use `".\Reports"` or `Get-Location` alone.
 
-## 2026-08-21 | PSWrap GUI alignment | pswrap-full-architecture
+## 2026-08-21 | Enterprise GUI Framework GUI alignment | modular-full-architecture
 
-- **Mistake:** GUI tools used only Tier 1 single-file here-string XAML and basic toast, while PSWrap (https://github.com/mabdulkadr/PSWrap) proved that complex GUI needs Tier 3 modular + embedded GZip+Base64 XAML, P/Invoke console-hide, and persistent settings — skill did not teach this as the canonical GUI reference.
-- **Cause:** File-architecture.md described Tier 3 as "frameworks only" and patterns.md did not point to PSWrap's WpfHelpers/UiLoader/Settings implementations.
-- **Fix:** Updated file-architecture.md Tier 3 to PSWrap reference (15-25 files, embedded XAML, AppConstants, UiLoader with fallback, Settings in %APPDATA%), added Hybrid decision guide (complex GUI → Tier 3 even for one audience), and marked PSWrap as canonical GUI in SKILL.md architecture table and reference list.
-- **Rule:** For any GUI with 5+ features, drag-drop, bundling, or persistent settings, use PSWrap Tier 3 modular + embedded XAML; Tier 1 remains only for simple 2-3 button tools.
+- **Mistake:** GUI tools used only Tier 1 single-file here-string XAML and basic toast, while Enterprise GUI Framework () proved that complex GUI needs Tier 3 modular + embedded GZip+Base64 XAML, P/Invoke console-hide, and persistent settings — skill did not teach this as the canonical GUI reference.
+- **Cause:** File-architecture.md described Tier 3 as "frameworks only" and patterns.md did not point to Enterprise GUI Framework's WpfHelpers/UiLoader/Settings implementations.
+- **Fix:** Updated file-architecture.md Tier 3 to Enterprise GUI Framework reference (15-25 files, embedded XAML, AppConstants, UiLoader with fallback, Settings in %APPDATA%), added Hybrid decision guide (complex GUI → Tier 3 even for one audience), and marked Enterprise GUI Framework as canonical GUI in SKILL.md architecture table and reference list.
+- **Rule:** For any GUI with 5+ features, drag-drop, bundling, or persistent settings, use Enterprise GUI Framework Tier 3 modular + embedded XAML; Tier 1 remains only for simple 2-3 button tools.
 
 ## 2026-08-21 | DeviceInfoViewer | initial-theme-not-applied
 
 - **Mistake:** DeviceInfoViewer launched with a single flat color — navigation bar and cards indistinguishable — until Dark → Light toggle was pressed, after which colors appeared correctly.
 - **Cause:** `Window.Resources` Tailwind Slate brushes were defined in XAML but `Set-Theme -IsDark $false` was never called on startup, so `DynamicResource` brushes remained frozen at XAML defaults until first toggle replaced them.
-- **Fix:** Added immediate `Set-Theme -Window $Window -IsDark $false` plus Sun icon init right after `ConvertTo-XamlWindow` (PSWrap pattern); documented in file-architecture.md bootstrap and as Pitfall 14.
+- **Fix:** Added immediate `Set-Theme -Window $Window -IsDark $false` plus Sun icon init right after `ConvertTo-XamlWindow` (Enterprise GUI Framework pattern); documented in file-architecture.md bootstrap and as Pitfall 14.
 - **Rule:** Always initialize theme immediately after XAML load — before FindName and ShowDialog — with `$isDarkMode = $false` and Sun icon.
 
 ## 2026-08-21 | DeviceInfoViewer | about-dialog-staticresource
@@ -112,7 +112,7 @@ Any unrecognized dotted keyword (.TITLE, .TAGS, ...) anywhere in a comment block
 ## 2026-08-21 | DeviceInfoViewer | button-polish-and-nav-colors
 
 - **Mistake:** All buttons used flat hover (`Opacity 0.85`) and navigation bar used subtle `SurfaceHoverBrush`/`AccentTintBrush` with low contrast; no shadow lift or accent border, so hover/active states were barely distinguishable.
-- **Cause:** Copied PSWrap's base styles verbatim without enhancing for modern polish; active nav was low-contrast tint instead of vibrant accent.
+- **Cause:** Copied Enterprise GUI Framework's base styles verbatim without enhancing for modern polish; active nav was low-contrast tint instead of vibrant accent.
 - **Fix:** Polished `BtnBase` with `DropShadow` hover lift (`Blur 14 Opacity 0.09`), `NavBtnBase` hover to `AccentTintBrush` + `BorderHoverBrush` + blue glow, active nav to `AccentBrush` + White, `BottomActionBtn` hover to `AccentTintBrush` + blue glow, and `Card/StatCard` to `14/18` with hover lift.
 - **Rule:** Every button must have a distinct hover (shadow/border) and active (vibrant) state; navigation active is always `AccentBrush` + White for maximum contrast.
 
@@ -166,13 +166,13 @@ Lessons promoted from this register into `references/pitfalls.md` (with user con
 ## 2026-08-22 | Skill maintenance | doc-drift-cleanup
 
 - **Mistake:** Full skill review found internal drift: SKILL.md TOC/Quick Recap/README said "10 Laws" while 12 existed; the Tier 1 bootstrap shipped a simplified Add-LogLine without $script:lastLogKey (tools built from it FAIL Test-ToolCompliance); stale "ring buffer/HashSet" descriptions contradicted the canonical lastLogKey guard; script-template.md log colors (INFO=White/DEBUG=Gray) diverged from canonical Cyan/DarkGray; the Detection template declared a Graph scope on a local-only script; SessionCard had no x:Key style; Embed-Xaml.ps1 was referenced but missing.
-- **Cause:** Rapid skill evolution (10 to 12 laws, PSWrap adoption, WhatIf fixes) without a final consistency pass across SKILL.md + references + README.
+- **Cause:** Rapid skill evolution (10 to 12 laws, Enterprise GUI Framework adoption, WhatIf fixes) without a final consistency pass across SKILL.md + references + README.
 - **Fix:** Unified all counts and anchors; replaced bootstrap Add-LogLine with verbatim-copy instruction; removed ring-buffer language everywhere; aligned color tables with _logging-canonical.md; fixed .PERMISSIONS/.AUTHOR in templates; converted SessionCard to Style x:Key; created scripts/Embed-Xaml.ps1; moved Advanced Capabilities + Communication Style to references/advanced-capabilities.md (SKILL.md now 536 lines); made Test-Skill.ps1 path fallback portable; fixed evals.json mojibake. Test-Skill: 50/50 PASS.
 - **Rule:** After any structural skill change, run Test-Skill.ps1 AND grep for stale counts/names ("10 Laws", old function names) across SKILL.md + references/ + README.md before considering the change done.
 
 ## 2026-08-22 | Skill maintenance | foundation-gap-analysis
 
-- **Mistake:** The skill cited PSWrap, Intune-Scripts, IntuneAutomation (ugurkocde), and DeviceOffboardingManager as foundations without auditing that their features were actually captured: compile-to-exe (PSWrap's core purpose), Authenticode signing, Intune Custom Compliance JSON contract, government cloud Graph endpoints, and PSGallery publishing were all absent.
+- **Mistake:** The skill cited Enterprise GUI Framework, Enterprise Intune Patterns, Enterprise Automation (enterprise), and Enterprise Device Management as foundations without auditing that their features were actually captured: compile-to-exe (Enterprise GUI Framework's core purpose), Authenticode signing, Intune Custom Compliance JSON contract, government cloud Graph endpoints, and PSGallery publishing were all absent.
 - **Cause:** Patterns were distilled from scripts the author had already internalized; capabilities living in tool form (compiler GUI, cert folder) rather than script patterns escaped extraction.
 - **Fix:** Added references/exe-packaging.md (CodeDOM EXE, signing with timestamp, icon conversion, companion bundling, PSGallery Install-Script flow); Custom Compliance Policies section in intune-patterns.md (single-line JSON contract, Compliant boolean, exit semantics); Government Clouds endpoint table in _graph-canonical.md; .github/workflows CI running Test-Skill + compliance gate on push/PR.
 - **Rule:** When citing a project as canonical source, diff its README/feature list against the skill's coverage before calling the distillation complete - features embodied in tools (not scripts) are the ones most likely to be missed.
@@ -237,11 +237,11 @@ Lessons promoted from this register into `references/pitfalls.md` (with user con
 - **Fix:** Replace via `Remove($key)` + `Add($key, $brush)` inside Set-Theme; reproduced in isolated STA harnesses and verified LOADED/THEME LIGHT/THEME DARK OK on both pwsh 7 and Windows PowerShell 5.1.
 - **Rule:** Never assign into a XamlReader-built ResourceDictionary by indexer - always Remove+Add when swapping theme token values at runtime.
 
-## 2026-08-23 | wpf-gui-tool.template | pswrap-loader-order
+## 2026-08-23 | wpf-gui-tool.template | loader-order
 
 - **Mistake:** ConvertTo-XamlWindow tried XmlNodeReader+XamlReader.Load FIRST and Parse as fallback; the Load path builds a resource dictionary whose indexer updates corrupt deferred DynamicResource refs - the real root cause behind the Set-Theme crash fixed earlier today.
-- **Cause:** PSWrap's canonical UiLoader does the opposite (Parse first, Load fallback); the template inverted the proven order, so the buggy dictionary path was the primary one.
-- **Fix:** Swapped to Parse-first in ConvertTo-XamlWindow; kept Remove+Add Set-Theme as belt-and-suspenders. Also adopted PSWrap's Invoke-SafeUIAction + Format-FileSize helpers and 25 extended token families (Code/Table/Tab/Blockquote/Icon) into Light/DarkTokens + design-tokens.md.
+- **Cause:** Enterprise GUI Framework's canonical UiLoader does the opposite (Parse first, Load fallback); the template inverted the proven order, so the buggy dictionary path was the primary one.
+- **Fix:** Swapped to Parse-first in ConvertTo-XamlWindow; kept Remove+Add Set-Theme as belt-and-suspenders. Also adopted Enterprise GUI Framework's Invoke-SafeUIAction + Format-FileSize helpers and 25 extended token families (Code/Table/Tab/Blockquote/Icon) into Light/DarkTokens + design-tokens.md.
 - **Rule:** Always load XAML with XamlReader.Parse first; XmlNodeReader+Load is a compatibility fallback only - and when two implementations of the same pattern disagree, diff the LOADER before blaming the consumer.
 
 ## 2026-08-23 | wpf-gui-tool.template | bracket-path-wildcard-logging
@@ -267,13 +267,13 @@ Lessons promoted from this register into `references/pitfalls.md` (with user con
 - **Mistake:** LogViewer/About child-window button handlers referenced builder locals (`$win.Close()`, `$box.Document`); PowerShell scriptblocks do not close over function locals, so when WPF fired the events later, every referenced local was null -> nested "ShowDialog ... null-valued expression" crash on first button press.
 - **Cause:** Assumed C#-style closure semantics; PS scriptblocks bind dynamically to session scope at invocation time.
 - **Fix:** Publish `$script:` refs (`$script:LogViewerWindow/LogViewerBox/lvCountText`, `$script:AboutWindow`) inside the builders and rewrite handlers against them; converted toast auto-dismiss to `$this.Stop()`; verified by raising real ButtonBase.Click events under a pumped dispatcher on pwsh 7 + PS 5.1.
-- **Rule:** Event-handler scriptblocks may only touch `$script:`-scoped state or `$this`/`$_` - never function locals; this is why canonical PSWrap handlers live at script scope.
+- **Rule:** Event-handler scriptblocks may only touch `$script:`-scoped state or `$this`/`$_` - never function locals; this is why canonical Enterprise GUI Framework handlers live at script scope.
 
-## 2026-08-23 | skill | pswrap-imported-as-canonical-gui
+## 2026-08-23 | skill | modular-imported-as-canonical-gui
 
-- **Mistake:** The skill maintained its own hand-rolled single-file WPF template while the owner canonical standard was PSWrap; piecemeal porting (navbar, toast, logviewer) kept drifting from the real tool and each drift cost a user-reported bug.
-- **Cause:** PSWrap lived as an external reference instead of an embedded scaffold.
-- **Fix:** Imported the complete wpf-gui-engineering templates/ tree as `templates/pswrap-gui/` (Start + config + src + xaml + Features, 12 files) plus its 6 reference docs into `references/pswrap/`; normalized author to git-config identity; verified 0 parse errors + XAML Parse OK on all imported files; SKILL.md now routes ALL GUI builds to pswrap-gui first.
+- **Mistake:** The skill maintained its own hand-rolled single-file WPF template while the owner canonical standard was Enterprise GUI Framework; piecemeal porting (navbar, toast, logviewer) kept drifting from the real tool and each drift cost a user-reported bug.
+- **Cause:** Enterprise GUI Framework lived as an external reference instead of an embedded scaffold.
+- **Fix:** Imported the complete wpf-gui-engineering templates/ tree as `templates/modular-gui/` (Start + config + src + xaml + Features, 12 files) plus its 6 reference docs into `references/modular/`; normalized author to git-config identity; verified 0 parse errors + XAML Parse OK on all imported files; SKILL.md now routes ALL GUI builds to modular-gui first.
 - **Rule:** When the owner names a reference implementation as THE standard, embed the implementation itself (files, not prose) and generate exclusively from it.
 
 ---
@@ -315,11 +315,11 @@ Lessons promoted from this register into `references/pitfalls.md` (with user con
 - **Fix:** Excluded artifacts/stubs during consolidation; kept newest verified generation per normalized name (+ SHA256 tie-break); preserved original docs as `README-original.md`.
 - **Rule:** Script repositories contain source + docs only; outputs go to runtime log paths and history lives in version control.
 
-## 2026-08-23 | wpf-gui-tool.template | pswrap-gapfill-pivot
+## 2026-08-23 | wpf-gui-tool.template | gapfill-pivot
 
-- **Mistake:** Imported the whole external wpf-gui-engineering templates/references trees into the skill as pswrap-gui; owner rejected vendoring and clarified the intent: diff PSWrap against OUR single-file template and add only the missing capabilities.
+- **Mistake:** Imported the whole external wpf-gui-engineering templates/references trees into the skill as modular-gui; owner rejected vendoring and clarified the intent: diff Enterprise GUI Framework against OUR single-file template and add only the missing capabilities.
 - **Cause:** Jumped to wholesale adoption instead of a gap analysis against the existing canonical template.
-- **Fix:** Removed imported copies + SKILL.md pointers; completed the interrupted structured LogViewer refactor (PSCustomObject {Counter,Timestamp,Level,Message,Color}, FIFO 1000, PSWrap copy format `[n] [HH:mm:ss] [LEVEL] msg` via StringBuilder with Clipboard::SetText->Set-Clipboard fallback, rebuild-on-clear); added Save/Load-UserSettings (%APPDATA%\settings.json) with theme restore on start + save on close; window root gained UseLayoutRounding/SnapsToDevicePixels/AllowDrop + 1100x830/Min 900x640.
+- **Fix:** Removed imported copies + SKILL.md pointers; completed the interrupted structured LogViewer refactor (PSCustomObject {Counter,Timestamp,Level,Message,Color}, FIFO 1000, Enterprise GUI Framework copy format `[n] [HH:mm:ss] [LEVEL] msg` via StringBuilder with Clipboard::SetText->Set-Clipboard fallback, rebuild-on-clear); added Save/Load-UserSettings (%APPDATA%\settings.json) with theme restore on start + save on close; window root gained UseLayoutRounding/SnapsToDevicePixels/AllowDrop + 1100x830/Min 900x640.
 - **Rule:** Enhance our canonical template toward reference parity feature-by-feature; never vendor external file trees into the skill without explicit owner request.
 
 ## Verification note: clipboard is env-blocked headless (CLIPBRD_E_CANT_OPEN even for bare SetText) - assert Copy via entry-buffer StringBuilder format, not GetText.

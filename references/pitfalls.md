@@ -573,7 +573,7 @@ $script:Window = ConvertTo-XamlWindow -Xaml $xaml
 # ... bindings, handlers ...
 [void]$script:Window.ShowDialog()
 
-# ✅ Initialize immediately after load (PSWrap pattern)
+# ✅ Initialize immediately after load (Enterprise GUI Framework pattern)
 $script:Window = ConvertTo-XamlWindow -Xaml $xaml
 try {
     Set-Theme -Window $script:Window -IsDark $false

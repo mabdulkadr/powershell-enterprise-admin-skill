@@ -1625,7 +1625,7 @@ Connect-MgGraphCommunity -Scopes $scopes -NoWelcome -ErrorAction Stop
 
 ### Multi-Method Auth Dialog (GUI Tools)
 
-Type 1 (WPF) tools that connect to Graph should offer the user a choice of auth methods — no single method works in every environment, and the user knows their context best. Battle-tested method set from the [Device Offboarding Manager](https://github.com/ugurkocde/DeviceOffboardingManager) by [@ugurkocde](https://github.com/ugurkocde) (Intune/Entra/Autopilot tool):
+Type 1 (WPF) tools that connect to Graph should offer the user a choice of auth methods — no single method works in every environment, and the user knows their context best. Battle-tested method set from the [Device Offboarding Manager]() by [@enterprise](https://github.com/enterprise) (Intune/Entra/Autopilot tool):
 
 | Method | When it wins | Notes |
 |--------|--------------|-------|
@@ -1999,7 +1999,7 @@ catch {
 
 ## Custom Compliance Policies
 
-Custom compliance scripts are a THIRD script format, distinct from Proactive Remediation pairs: a **discovery script** runs on the device and emits ONE line of JSON that Intune validates against a **JSON settings definition** uploaded beside it. Distilled from production App Presence / App Version compliance scripts (see https://github.com/mabdulkadr/Intune-Scripts → `Intune-Compliance-Policies`).
+Custom compliance scripts are a THIRD script format, distinct from Proactive Remediation pairs: a **discovery script** runs on the device and emits ONE line of JSON that Intune validates against a **JSON settings definition** uploaded beside it. Distilled from production App Presence / App Version compliance scripts (see  → `Intune-Compliance-Policies`).
 
 ### Folder contract
 

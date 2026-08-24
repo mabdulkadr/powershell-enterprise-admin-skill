@@ -1,6 +1,6 @@
 <#
 .TITLE
-    Embed-Xaml - GZip+Base64 XAML embedder for Tier 3 (PSWrap) tools.
+    Embed-Xaml - GZip+Base64 XAML embedder for Tier 3 (Enterprise GUI Framework) tools.
 
 .SYNOPSIS
     Build step that compresses xaml\*.xaml into Base64 blobs and injects them into src\UiLoader.ps1.
@@ -22,7 +22,7 @@
     Exit 0 on success, 1 on failure.
 
 .TAGS
-    Build,Tier3,PSWrap,Xaml
+    Build,Tier3,Enterprise GUI Framework,Xaml
 
 .PLATFORM
     Windows
@@ -38,14 +38,14 @@
 
 .CHANGELOG
     1.0.0 (2026-08-22)
-    - Initial release - implements the PSWrap embedded-XAML build step referenced by file-architecture.md
+    - Initial release - implements the Enterprise GUI Framework embedded-XAML build step referenced by file-architecture.md
 
 .LASTUPDATE
     2026-08-22
 
 .EXAMPLE
     .\Embed-Xaml.ps1 -ProjectRoot . -XamlDirName views -UiLoaderPath src\UiLoader.ps1
-    Uses custom folder names for projects that deviate from the PSWrap default layout.
+    Uses custom folder names for projects that deviate from the Enterprise GUI Framework default layout.
 
 .EXAMPLE
     .\Embed-Xaml.ps1 -ProjectRoot C:\Tools\MyGuiTool

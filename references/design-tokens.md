@@ -203,9 +203,9 @@ Match icon size to context:
 All icons are `<Path>` elements with SVG `Data="..."`. Never use Segoe Fluent Icons / symbol fonts — they don't exist on Windows Server by default.
 
 See `references/icons.md` for the standard icon set (sun, moon, settings, power, info, etc.) with verified SVG path data.
-## Extended Token Families (PSWrap parity - 2026-08-23)
+## Extended Token Families - 2026-08-23)
 
-Sourced from PSWrap `src/WpfHelpers.ps1`. Seeded in `wpf-gui-tool.template.ps1` LightTokens/DarkTokens; consumed by data-heavy tool styles (code blocks, tables, tabs, markdown About rendering).
+Sourced from enterprise design system `src/WpfHelpers.ps1`. Seeded in `wpf-gui-tool.template.ps1` LightTokens/DarkTokens; consumed by data-heavy tool styles (code blocks, tables, tabs, markdown About rendering).
 
 | Token | Light | Dark | Use |
 |-------|-------|------|-----|
@@ -226,4 +226,4 @@ Sourced from PSWrap `src/WpfHelpers.ps1`. Seeded in `wpf-gui-tool.template.ps1` 
 | TabInactiveBg / TabInactiveBorder / TabInactiveText | #F8FAFC / #E2E8F0 / #64748B | #1E293B / #475569 / #94A3B8 | Inactive tab |
 | TabHoverBg | #F1F5F9 | #334155 | Tab hover |
 
-Also adopted from PSWrap: `Invoke-SafeUIAction` (dispatcher-safe scriptblock runner) and `Format-FileSize` now ship in wpf-gui-tool.template.ps1.
+Also adopted: `Invoke-SafeUIAction` (dispatcher-safe scriptblock runner) and `Format-FileSize` now ship in wpf-gui-tool.template.ps1.

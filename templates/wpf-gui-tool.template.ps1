@@ -96,7 +96,7 @@ if (-not (Test-Path -LiteralPath $_canonicalLog)) {
 
 # ---- Template-specific extensions below this line ----
 
-# Structured log buffer (PSWrap schema): {Counter, Timestamp, Level, Message, Color}, FIFO 1000.
+# Structured log buffer (Enterprise GUI Framework schema): {Counter, Timestamp, Level, Message, Color}, FIFO 1000.
 $script:LogCounter   = 0
 $script:MaxLogLines  = 1000
 $script:LogEntries   = [System.Collections.ArrayList]::new()
@@ -394,7 +394,7 @@ $xaml = @'
             <Setter Property="BorderThickness" Value="1" />
         </Style>
 
-        <!-- 10/19 NavBtnBase (PSWrap-exact: hover SurfaceHover, pressed AccentTint) -->
+        <!-- 10/19 NavBtnBase (Enterprise GUI Framework-exact: hover SurfaceHover, pressed AccentTint) -->
         <Style x:Key="NavBtnBase" TargetType="{x:Type Button}">
             <Setter Property="Height" Value="46" />
             <Setter Property="Cursor" Value="Hand" />
@@ -762,7 +762,7 @@ $xaml = @'
             </Grid>
         </Border>
 
-        <!-- Toast stack (Pattern L - PSWrap-style animated notifications, never MessageBox) -->
+        <!-- Toast stack (Pattern L - Enterprise GUI Framework-style animated notifications, never MessageBox) -->
         <StackPanel x:Name="ToastContainer" Grid.Row="1" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,8,16" Panel.ZIndex="99"/>
         </Grid>
     </Grid>
@@ -778,7 +778,7 @@ function ConvertTo-XamlWindow {
     param([string]$Xaml)
     $clean = $Xaml -replace 'x:Class=".*?"', '' -replace 'mc:Ignorable=".*?"', ''
     $clean = $clean.Trim()
-    # Parse FIRST (PSWrap-proven): XmlNodeReader+Load yields a dictionary whose
+    # Parse FIRST (Enterprise GUI Framework-proven): XmlNodeReader+Load yields a dictionary whose
     # indexer updates corrupt deferred DynamicResource refs - Load is fallback only.
     try {
         return [System.Windows.Markup.XamlReader]::Parse($clean)
@@ -1109,7 +1109,7 @@ function Set-UIState {
     }
 }
 
-# PSWrap-exact toast: slide-in colored card with SVG icon, 3s auto-dismiss fade-out.
+# Enterprise GUI Framework-exact toast: slide-in colored card with SVG icon, 3s auto-dismiss fade-out.
 function Show-ToastMessage {
     [CmdletBinding()]
     param(
@@ -1192,7 +1192,7 @@ function Show-ToastMessage {
     }
 }
 
-# Applies PSWrap nav states: active tab gets AccentTint bg + AccentHover fg + Bold;
+# Applies Enterprise GUI Framework nav states: active tab gets AccentTint bg + AccentHover fg + Bold;
 # every other nav button goes Transparent + TextSecondary + SemiBold; pages toggle.
 function Set-ActivePage {
     [CmdletBinding()]
@@ -1274,7 +1274,7 @@ $script:LogsBtn.Add_Click({
     finally { Release-Action }
 }) | Out-Null
 
-# Initialize PSWrap nav state: Dashboard active, everything else transparent.
+# Initialize Enterprise GUI Framework nav state: Dashboard active, everything else transparent.
 Set-ActivePage -TabName 'Dashboard'
 
 # ============================================================================

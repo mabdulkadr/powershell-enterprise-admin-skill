@@ -69,15 +69,15 @@ Pick the smallest structure that fits. Most admin tools are **single-file** — 
 
 ---
 
-## Tier 3: Modular (Hybrid — PSWrap Reference)
+## Tier 3: Modular (Hybrid — Enterprise Reference)
 
-**For:** Complex GUI tools with 5+ features, persistent settings, or companion-file workflows — **not only frameworks**. This is the PSWrap canonical pattern.
+**For:** Complex GUI tools with 5+ features, persistent settings, or companion-file workflows — **not only frameworks**. This is the Enterprise GUI Framework canonical pattern.
 
-**PSWrap is the reference GUI implementation:** https://github.com/mabdulkadr/PSWrap — every new complex GUI tool must mirror its structure, embedded XAML, console-hide, and settings persistence. Use **Hybrid rule**: Tier 1 for simple single-workflow tools, Tier 3 (PSWrap-style) for complex tools.
+**Enterprise modular implementation:**  — every new complex GUI tool must mirror its structure, embedded XAML, console-hide, and settings persistence. Use **Hybrid rule**: Tier 1 for simple single-workflow tools, Tier 3 (Enterprise GUI Framework-style) for complex tools.
 
 ```
-📂 ProjectRoot                          # PSWrap example
- ├── 📄 PSWrap.ps1 / Start-[ToolName].ps1  # bootstrapper: console-hide + dot-source in order
+📂 ProjectRoot                          # Enterprise GUI Framework example
+ ├── 📄 Enterprise GUI Framework.ps1 / Start-[ToolName].ps1  # bootstrapper: console-hide + dot-source in order
  ├── 📂 config/
  │    ├── 📄 AppConstants.ps1          # ToolName, AppVersion, RootDir, LogDir, XamlDir, FeaturesDir
  │    └── 📄 settings.json             # placeholder (runtime creates %APPDATA%\ToolName\settings.json)
@@ -102,25 +102,25 @@ Pick the smallest structure that fits. Most admin tools are **single-file** — 
 
 **Embedded XAML:** Build step `scripts/Embed-Xaml.ps1` GZip+Base64-encodes `xaml/MainWindow.xaml` into `$script:EmbeddedXaml` in `src/UiLoader.ps1`. At runtime `Get-EmbeddedXaml` decompresses; if missing, falls back to `xaml/*.xaml`. This guarantees the tool never loses its UI and supports single-file distribution.
 
-**Console hide:** `PSWrap.ps1` uses P/Invoke `GetConsoleWindow` + `ShowWindow(0)` to hide the PowerShell console flash before WPF shows — copy this verbatim for every GUI tool.
+**Console hide:** `Enterprise GUI Framework.ps1` uses P/Invoke `GetConsoleWindow` + `ShowWindow(0)` to hide the PowerShell console flash before WPF shows — copy this verbatim for every GUI tool.
 
 **When to reach Tier 3 (Hybrid):**
 
 - You are building a **framework** that produces other tools
-- **OR** GUI has **5+ distinct features** with settings persistence, drag-drop, or companion-file bundling (PSWrap case) — use Tier 3 even for single audience
+- **OR** GUI has **5+ distinct features** with settings persistence, drag-drop, or companion-file bundling (Enterprise GUI Framework case) — use Tier 3 even for single audience
 - You need **per-feature unit tests** in isolation
 
 **Don't reach Tier 3 for:** A single-workflow helpdesk tool with 2-3 buttons and no persistent settings — Tier 1 is still correct.
 
 ---
 
-## Decision Guide (Hybrid — PSWrap Rule)
+## Decision Guide (Hybrid — Enterprise GUI Framework Rule)
 
 Ask these four questions:
 
 ```
 Is this a GUI tool with 5+ features, persistent settings, or drag-drop/bundling?
-├── YES → Tier 3 (PSWrap modular + embedded XAML)  # complexity wins over audience count
+├── YES → Tier 3 (Enterprise GUI Framework modular + embedded XAML)  # complexity wins over audience count
 │
 └── NO → Is this a single admin tool (one workflow, one audience)?
     ├── YES → Tier 1 (single file)
@@ -283,7 +283,7 @@ function ConvertTo-XamlWindow {
 $script:Window = ConvertTo-XamlWindow -Xaml $xaml
 
 # --- Initialize theme immediately (prevents initial single-color screen) ---
-# PSWrap and DeviceInfoViewer both showed all-white/all-one-color until first ThemeToggle
+# Enterprise GUI Framework and DeviceInfoViewer both showed all-white/all-one-color until first ThemeToggle
 # because DynamicResource brushes were not materialized until Set-Theme replaced them.
 try {
     Set-Theme -Window $script:Window -IsDark $false

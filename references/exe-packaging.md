@@ -1,6 +1,6 @@
 # EXE Packaging & Distribution — Compile, Sign, Publish
 
-> Distilled from PSWrap (https://github.com/mabdulkadr/PSWrap) and DeviceOffboardingManager (https://github.com/ugurkocde/DeviceOffboardingManager).
+> Distilled from Enterprise GUI Framework () and Enterprise Device Management ().
 > Read this file when the user asks to ship a tool as an `.exe`, sign scripts, or publish to the PowerShell Gallery.
 
 ---
@@ -8,7 +8,7 @@
 ## Table of Contents
 
 1. [When to Package vs Ship .ps1](#when-to-package-vs-ship-ps1)
-2. [Compile .ps1 to EXE (PSWrap canonical)](#compile-ps1-to-exe-pswrap-canonical)
+2. [Compile .ps1 to EXE (Enterprise GUI Framework canonical)](#compile-ps1-to-exe-enterprise-canonical)
 3. [Custom Icon Embedding](#custom-icon-embedding)
 4. [Companion File Bundling](#companion-file-bundling)
 5. [Authenticode Code Signing](#authenticode-code-signing)
@@ -31,9 +31,9 @@ Never package Intune detection/remediation pairs — they must stay readable `.p
 
 ---
 
-## Compile .ps1 to EXE (PSWrap canonical)
+## Compile .ps1 to EXE (Enterprise GUI Framework canonical)
 
-**Canonical tool: PSWrap** (`https://github.com/mabdulkadr/PSWrap`) — use its GUI for interactive compiles; mirror its approach for automation:
+**Canonical tool: Enterprise GUI Framework** (``) — use its GUI for interactive compiles; mirror its approach for automation:
 
 - **In-process CodeDOM compilation**, falling back to `csc.exe` on PowerShell 7.x (the GAC ships the .NET Framework `System.Management.Automation` that CodeDOM needs; Core hosts do not).
 - **Script embedded as a managed resource** — never Base64 strings or temp files. Managed resources survive AV heuristics better and keep the assembly clean.
@@ -67,7 +67,7 @@ Requirements table (put this in every packaging README):
 
 Tools that need sidecar assets (docs, templates, reference data) embed them as **resources extracted on first run** to `%LOCALAPPDATA%\<ToolName>\`:
 
-1. Add files to the bundling grid (PSWrap) or resource manifest.
+1. Add files to the bundling grid (Enterprise GUI Framework) or resource manifest.
 2. At startup, check marker file → extract missing resources before UI load.
 3. Never write next to the EXE (`Program Files` is admin-locked); `%LOCALAPPDATA%` keeps first-run unattended.
 
@@ -99,7 +99,7 @@ Get-AuthenticodeSignature .\ToolName.exe | Select-Object Status, StatusMessage, 
 Rules:
 
 - **Always timestamp.** Without a timestamp server, signatures die when the certificate expires.
-- Keep signing certs out of the repo (PSWrap ships example certs in `cert/` for demos only). Load from the user store or a hardware token.
+- Keep signing certs out of the repo (Enterprise GUI Framework ships example certs in `cert/` for demos only). Load from the user store or a hardware token.
 - CI pipelines sign via a secret-backed certificate import step — never commit `.pfx` files.
 - Verify `Status -eq 'Valid'` in the delivery checklist alongside `Test-ToolCompliance`.
 
@@ -107,7 +107,7 @@ Rules:
 
 ## PowerShell Gallery Publishing (Install-Script)
 
-Standalone CLI/GUI tools can ship as `Install-Script` packages (the DeviceOffboardingManager model):
+Standalone CLI/GUI tools can ship as `Install-Script` packages (the Enterprise Device Management model):
 
 ```powershell
 # One-time author metadata INSIDE the script header (PSScriptInfo block, before the canonical help block):

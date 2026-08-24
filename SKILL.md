@@ -140,7 +140,7 @@ Long-context models drift: they write a 1,400-line GUI and quietly mint `Primary
 | 8 | **THREAD LAW** — NEVER block the WPF dispatcher. Long ops use `[powershell]::BeginInvoke()` + `DispatcherTimer` (350ms poll). Data load uses `Start-Job` + `DispatcherTimer` (300ms poll) | A blocked UI thread = frozen window. The user thinks the tool crashed. They click again. Now you have a second operation racing the first. |
 | 9 | **AMPERSAND LAW** — Every `&` in XAML text/attributes MUST be `&amp;`. Unescaped `&` causes `XamlParseException` | This is a silent crash at ShowDialog. The XAML parses but the renderer fails. Test with `XamlReader.Parse()` to catch it before runtime. |
 | 10 | **STATICRESOURCE LAW** — Every `{StaticResource X}` MUST have a matching `<Style x:Key="X">` in `Window.Resources`. Missing key = crash at `ShowDialog()` | Same silent crash as Law 9. The parse succeeds, the runtime fails. Use `DynamicResource` when the key may not exist at compile time. |
-| 11 | **LANGUAGE & BRANDING LAW** — All generated scripts, comments, headers, log messages, and README.md must be **English only**. Never emit Arabic, mixed-language, or external branding (e.g., `IntuneAutomation.com`) in code or docs. `.AUTHOR` resolves at build time: `git config user.name` when discoverable, otherwise the literal `AI Generated`; use internal references (`references/_header-canonical.md`) | Enterprise scripts run on English OS locales, Intune, and Git; non-ASCII breaks parsers, grep, and CI. External branding leaks training examples and confuses ownership. |
+| 11 | **LANGUAGE & BRANDING LAW** — All generated scripts, comments, headers, log messages, and README.md must be **English only**. Never emit Arabic, mixed-language, or external branding (e.g., `Enterprise patterns.com`) in code or docs. `.AUTHOR` resolves at build time: `git config user.name` when discoverable, otherwise the literal `AI Generated`; use internal references (`references/_header-canonical.md`) | Enterprise scripts run on English OS locales, Intune, and Git; non-ASCII breaks parsers, grep, and CI. External branding leaks training examples and confuses ownership. |
 | 12 | **REPORT PATH LAW** — Default `OutputPath`/`Reports` must be **beside the original script**, never `".\Reports"` or `Get-Location` alone. Use `$PSScriptRoot` with dot-source fallback: `$scriptBase = if ($PSScriptRoot) { $PSScriptRoot } elseif ($PSCommandPath) { Split-Path -Parent $PSCommandPath } elseif ($MyInvocation.MyCommand.Path) { Split-Path -Parent $MyInvocation.MyCommand.Path } else { (Get-Location).Path }; Join-Path $scriptBase "Reports"` and normalize with `if (-not $PSBoundParameters.ContainsKey('OutputPath')) { $OutputPath = Join-Path $scriptBase "Reports" }` | `. 'path\to\script.ps1'` leaves `$PSScriptRoot=''` → `Join-Path '' 'Reports'` crashes with `ParameterBindingValidationException`. Beside-script guarantees the report is found where the operator expects it, regardless of caller's `cd`. |
 
 ---
@@ -168,9 +168,9 @@ Pick the smallest structure that fits. Most admin tools are **single-file** — 
 |------|------|-------|
 | **1. Single-file** | Default — most admin tools | 4-5 files, everything in 1 `.ps1` |
 | **2. Split XAML** | Long XAML (>500 lines) or repeated dialogs | 6-7 files, XAML in `.xaml` |
-| **3. Modular (PSWrap)** | Complex GUI (5+ features, settings, drag-drop) OR frameworks | 15-25 files, embedded XAML + `src/` + `config/` |
+| **3. Modular** | Complex GUI (5+ features, settings, drag-drop) OR frameworks | 15-25 files, embedded XAML + `src/` + `config/` |
 
-**Hybrid rule (PSWrap):** Tier 1 for simple single-workflow tools, **Tier 3 PSWrap-style for complex GUI** even with one audience. PSWrap (https://github.com/mabdulkadr/PSWrap) is the canonical GUI reference — embedded GZip+Base64 XAML, P/Invoke console-hide, `src/` modular, `%APPDATA%` settings. See `references/file-architecture.md` (Tier 3 PSWrap).
+**Hybrid rule:** Tier 1 for simple single-workflow tools, **Tier 3 Enterprise patterns-style for complex GUI** even with one audience. Enterprise patterns () is the canonical GUI reference — embedded GZip+Base64 XAML, P/Invoke console-hide, `src/` modular, `%APPDATA%` settings. See `references/file-architecture.md` (Tier 3 Enterprise patterns).
 
 **The 80% rule:** Use Tier 1 for 80% of simple tools. Complex GUI → Tier 3.
 
@@ -531,8 +531,8 @@ This skill learns from its own mistakes. The **Lessons Learned Register** lives 
 
 Then:
 
-4. **`scripts/`** — Canonical implementations, copy verbatim: `Add-LogLine.ps1` (GUI), `Write-Log.ps1` (CLI + `Initialize-Log`/`Finish-Script`), `Guard-Action.ps1` (Pattern H), `Get-MgGraphAllPages.ps1`, `Invoke-GraphRequestWithRetry.ps1`, `Invoke-GraphBatchRequest.ps1`, `Get-Graph403Message.ps1`, `ConvertTo-SafeDateTime.ps1`, `Connect-GraphAuth.ps1`, `Test-XamlFile.ps1`, `Test-Skill.ps1` (skill self-test), `Test-Delivery.ps1` (one-shot delivery verifier: parser + compliance + PS 5.1 smoke test), plus PSWrap-style `Embed-Xaml.ps1` for embedded XAML build step
-5. **`references/file-architecture.md`** — Tier 1/2/3 folder structures + complete Tier 1 bootstrap code + **PSWrap Tier 3 reference (embedded XAML, console-hide, AppConstants)**
+4. **`scripts/`** — Canonical implementations, copy verbatim: `Add-LogLine.ps1` (GUI), `Write-Log.ps1` (CLI + `Initialize-Log`/`Finish-Script`), `Guard-Action.ps1` (Pattern H), `Get-MgGraphAllPages.ps1`, `Invoke-GraphRequestWithRetry.ps1`, `Invoke-GraphBatchRequest.ps1`, `Get-Graph403Message.ps1`, `ConvertTo-SafeDateTime.ps1`, `Connect-GraphAuth.ps1`, `Test-XamlFile.ps1`, `Test-Skill.ps1` (skill self-test), `Test-Delivery.ps1` (one-shot delivery verifier: parser + compliance + PS 5.1 smoke test), plus Enterprise patterns-style `Embed-Xaml.ps1` for embedded XAML build step
+5. **`references/file-architecture.md`** — Tier 1/2/3 folder structures + complete Tier 1 bootstrap code + **Enterprise patterns Tier 3 reference (embedded XAML, console-hide, AppConstants)**
 6. **`references/design-tokens.md`** — Complete Tailwind Slate color tokens + light/dark overrides + spacing + typography (canonical for `SKILL.md` Design System)
 7. **`references/xaml-styles.md`** — Full XAML for every required style (BtnBase hierarchy, Card, StatCard, InputBox, NavBtnBase, StyledCheckBox, StyledComboBox, LiveMessageCenterBox, SessionCard)
 8. **`references/patterns.md`** — The 21 canonical patterns (A–U)
@@ -548,7 +548,7 @@ Then:
 18. **`references/readme-template.md`** — Professional README.md template (4 variants, canonical for `SKILL.md` README section)
 19. **`references/lessons-learned.md`** — Lessons Learned Register format, triggers, and worked example
 20. **`references/advanced-capabilities.md`** — Communication Style + advanced scenarios (multi-window tools, REST API backends, self-updating tools, bulk operations, plugin architecture)
-21. **`references/exe-packaging.md`** — Ship as .exe: PSWrap CodeDOM compilation, Authenticode signing, icon embedding, companion bundling, PSGallery publishing
+21. **`references/exe-packaging.md`** — Ship as .exe: Enterprise patterns CodeDOM compilation, Authenticode signing, icon embedding, companion bundling, PSGallery publishing
 22. **`templates/`** - Copy-paste-ready scaffolds for every deliverable (Intune detect/remediate/notification, CLI, WPF GUI with all 19 styles, macOS, 4 README variants) + guide. TEMPLATE LOCK: copy first, customize placeholders only
 
 ---
