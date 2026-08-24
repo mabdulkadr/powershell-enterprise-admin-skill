@@ -1,10 +1,18 @@
-# 🛡️ [Solution Name] – Intune Proactive Remediation Pair
+﻿<div align="center">
+
+# 🛡️ [Solution Name]
+
+**Intune Proactive Remediation Pair**
+
+[One sentence on what the package detects and remediates.]
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![PowerShell](https://img.shields.io/badge/powershell-5.1%2B-blue.svg)
 ![Platform](https://img.shields.io/badge/Windows-10%2F11-blue.svg)
 ![Automation](https://img.shields.io/badge/Intune-Proactive%20Remediation-brightgreen.svg)
 ![Version](https://img.shields.io/badge/version-[Version]-green.svg)
+
+</div>
 
 ---
 
@@ -132,9 +140,10 @@ remediate-[solution-name].ps1
 ---
 
 ## 👤 Author
+
 **[Your Name]**  
+GitHub: [@your-handle](https://github.com/your-handle)  
 Website: [Your Website]  
-Version: **[Version]**  
 
 ---
 
@@ -150,14 +159,12 @@ This skill and every script it generates are provided as-is with no warranty of 
 ---
 <div align="center">
 
-### ⭐ Support the Project
-
-**If this tool saved you time, please star the repository** — it helps others discover it.
+⭐ **If this skill saves you time, star the repo — it helps others find it.**
 
 [Report an Issue](../../issues) · [momar.tech](https://momar.tech)
 
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/mabdulkadrx)
 
-> **PowerShell Enterprise Admin** — *Enterprise PowerShell Tooling*
+Built with [**PowerShell Enterprise Admin**](https://github.com/mabdulkadr/powershell-enterprise-admin-skill)
 
 </div>

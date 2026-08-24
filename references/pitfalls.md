@@ -26,6 +26,10 @@ Every crash listed here was debugged in production. The fix is included. Read th
 18. [Pitfall: Indexer Assignment Into XamlReader Resources Corrupts Deferred DynamicResource](#pitfall-indexer-assignment-into-xamlreader-resources-corrupts-deferred-dynamicresource)
 19. [Pitfall: Bracket Paths Turn -Path Into Wildcards And Break Log Writes](#pitfall-bracket-paths-turn-path-into-wildcards-and-break-log-writes)
 20. [Pitfall: Event Handlers Cannot See Builder Function Locals](#pitfall-event-handlers-cannot-see-builder-function-locals)
+21. [Pitfall: Invisible U+FEFF Ghosts Survive Clean Parses After Programmatic Splices](#pitfall-invisible-uffeff-ghosts-survive-clean-parses-after-programmatic-splices)
+22. [Pitfall: PowerShell -replace Is Case-Insensitive](#pitfall-powershell--replace-is-case-insensitive)
+23. [Pitfall: Load XAML With Parse First — Load Is A Fallback Only](#pitfall-load-xaml-with-parse-first--load-is-a-fallback-only)
+24. [Pitfall: Capture A Hash Baseline At Delivery — Treat Mismatch As External Drift First](#pitfall-capture-a-hash-baseline-at-delivery--treat-mismatch-as-external-drift-first)
 
 ---
 
@@ -196,6 +200,20 @@ Extra or missing `</Grid>` causes `XamlParseException` with a misleading element
 <Button Content="X"/>
 <!-- or -->
 <Button><StackPanel>...</StackPanel></Button>
+```
+
+### Header Rows Must Pin Right-Side Buttons With LastChildFill="False"
+
+A plain `DockPanel` defaults to `LastChildFill="True"`, so the last child stretches and sits NEXT TO the label instead of docking to the far right. Header rows that pin buttons right (Live Log Copy/Clear) need the attribute.
+
+```xml
+<!-- ✅ Label left, buttons pinned right, same row -->
+<DockPanel LastChildFill="False">
+    <TextBlock DockPanel.Dock="Left" Text="Live Log"/>
+    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+        <Button Content="Copy"/> <Button Content="Clear"/>
+    </StackPanel>
+</DockPanel>
 ```
 
 ---
@@ -405,6 +423,8 @@ If both succeed, run the app and verify `ShowDialog()` reaches. Even valid XAML 
 
 If ShowDialog crashes, comment out everything below the failing line and add back incrementally until you find the culprit.
 
+**Headless/CI clipboard trap:** automated sessions cannot open the clipboard (`CLIPBRD_E_CANT_OPEN`, even for bare `SetText`). When verifying a Copy button programmatically, assert the entry-buffer StringBuilder format instead of calling `GetText`.
+
 ---
 
 ## Pitfall: Measure-Object .Sum Returns $null on Empty Sets
@@ -610,6 +630,7 @@ Declaring `[HelpMessage('...')]` as a standalone attribute above a parameter par
 **Rules:**
 1. Always declare HelpMessage as a named argument of `[Parameter()]` - never as a standalone attribute.
 2. Smoke-test every CLI tool under Windows PowerShell 5.1 (`powershell.exe -File tool.ps1 -WhatIf`); pwsh-only success is not proof. `scripts/Test-Delivery.ps1 -SmokeTest` automates this.
+3. Keep alias-like English words OUT of HelpMessage strings - "Folder where JSON..." makes the no-aliases grep flag the file. Rephrase ("Folder for JSON...").
 
 ## Pitfall: Array-Preserve Comma Cannot Combine With Splatting Syntax
 
@@ -735,4 +756,73 @@ Minimal HTML (flat header, plain grid) looks weak compared to WPF polish.
 About that mirrors the full README with 12 sections is too verbose, and live system data (ComputerName, OS Caption) inside XAML Text attributes introduces non-ASCII or dynamic values that break 5.1 parsing or compliance (literal "Add_Closing" inside XAML is counted as second handler).
 
 **Fix:** About is concise program definition only: hero + Overview paragraph + 3 Highlights + Requirements/Author grid + Disclaimer, height 520, ASCII-only, avoid literal "Add_Closing" inside XAML strings (use "window-closing").
+
+## Pitfall: Invisible U+FEFF Ghosts Survive Clean Parses After Programmatic Splices
+
+A leading UTF-8 BOM decoded through tools that treat it as content (e.g., Python `read_text(encoding='utf-8')`) leaves an invisible `U+FEFF` glued to the inserted text. PowerShell then parses `<U+FEFF>function Name {...}` as a COMMAND INVOCATION named `?function` - the Parser reports **0 errors** and the script crashes at runtime with `The term '?function' is not recognized`. A doubled BOM (`EF BB BF EF BB BF`, from repeated editor re-saves) is equally toxic: `#` / `<#` are no longer recognized and the entire help block parses as code.
+
+```powershell
+# ✅ After ANY programmatic splice/re-save: normalize to exactly one BOM
+$bytes = [System.IO.File]::ReadAllBytes($path)
+$body = $bytes; while ($bytes[0] -eq 0xEF) { $body = $bytes[3..($bytes.Length-1)]; break }  # strip, then:
+$utf8Bom = [byte[]](0xEF,0xBB,0xBF) + $body
+[System.IO.File]::WriteAllBytes($path, $utf8Bom)
+
+# ✅ Ghost-command scan: must return 0
+$ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$null)
+$ghosts = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.CommandAst] -and
+    $args[0].GetCommandName() -match '^\?' }, $true)
+```
+
+**Rules:**
+1. Parse 0 errors does NOT catch invisible `U+FEFF` ghosts - run the AST ghost-command scan after splicing code programmatically.
+2. Validate single BOM: `bytes[0..2] == EF BB BF` AND `bytes[3] -ne 0xEF`. Never prepend BOMs manually.
+
+## Pitfall: PowerShell -replace Is Case-Insensitive
+
+`-replace` ignores case by default. A PascalCase splitter like `-replace '(?<=[a-z])([A-Z])', ' $1'` matched EVERY letter pair and produced `G e t O U U s e r s` in generated `.TITLE` fields.
+
+```powershell
+# ❌ Case-insensitive: matches every pair
+$name -replace '(?<=[a-z])([A-Z])', ' $1'
+
+# ✅ Case-sensitive replacement operator
+$name -creplace '(?<=[a-z])([A-Z])', ' $1'
+```
+
+**Rule:** Use `-creplace` for any casing-sensitive regex transformation; reserve `-replace` for case-proof patterns.
+
+## Pitfall: Load XAML With Parse First — Load Is A Fallback Only
+
+`XamlReader.Parse` and the XmlNodeReader+`XamlReader.Load` path build DIFFERENT resource dictionaries: the Load-produced dictionary corrupts deferred DynamicResource references when updated (the true root cause behind the Set-Theme indexer crash). Canonical loaders therefore try `XamlReader.Parse` FIRST and keep XmlNodeReader+Load as a compatibility fallback - a template that inverted this order shipped the buggy dictionary as its primary path.
+
+```powershell
+# ✅ Canonical order
+try   { $Window = [Windows.Markup.XamlReader]::Parse($xaml) }
+catch { # fallback only
+    $xml = [xml]$xaml; $reader = New-Object System.Xml.XmlNodeReader($xml)
+    $Window = [Windows.Markup.XamlReader]::Load($reader)
+}
+```
+
+**Rules:**
+1. Always load XAML with `XamlReader.Parse` first; XmlNodeReader+Load is a compatibility fallback.
+2. When two implementations of the same pattern disagree, diff the LOADER before blaming the consumer.
+
+## Pitfall: Capture A Hash Baseline At Delivery — Treat Mismatch As External Drift First
+
+Delivered scripts were silently modified after handoff twice: a parameter default flipped (`'None'` → `'html'`) and executed by an unknown process, and a template file vanished mid-session with no local operation touching it. Without an integrity baseline, drift is only discoverable through behavioral anomalies during verification.
+
+```powershell
+# ✅ Immediately after delivery
+Get-FileHash .\*.ps1 -Algorithm SHA256 | Export-Csv .\baseline.csv -NoTypeInformation -Encoding UTF8
+
+# ✅ During verification: documented contract vs observed behavior
+Select-String -Path .\Get-DeviceInventory.ps1 -Pattern '\$ExportFormat\s*=\s*' 
+```
+
+**Rules:**
+1. Capture a `Get-FileHash` baseline CSV at delivery time; re-check it before every follow-up session.
+2. During verification, diff observed defaults against the documented `.PARAMETER` contract - treat any mismatch as external drift first, code bug second.
+3. Run `Test-Skill.ps1` after ANY bulk file work - inventory drift gets caught immediately.
 

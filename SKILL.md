@@ -1,4 +1,4 @@
----
+﻿---
 name: powershell-enterprise-admin
 description: 'Build production-grade PowerShell tools with Tailwind Slate WPF GUI, Intune Proactive Remediation pairs, and Graph/Entra ID automation. Handles AD bulk ops, WinRM, CIM inventory, event logs, printer management, and macOS bash. Use for helpdesk tools, dashboards, DataGrid UIs, dark/light theme, compliance scripts, notification runbooks, CSV-driven AD, or professional READMEs — even when phrased casually like ''make me a tool''. Skip for one-liners, non-PowerShell languages, or conceptual explanations.'
 ---
@@ -11,13 +11,13 @@ Build production-grade PowerShell tools with modular architecture, Tailwind Slat
 
 ## 📑 Table of Contents
 
-1. [Script Type Routing (Classify Before You Build)](#script-type-routing--classify-before-you-build)
+1. [Script Type Routing (Classify Before You Build)](#script-type-routing-classify-before-you-build)
 2. [Canonical Conventions (One Table, No Exceptions)](#canonical-conventions-one-table-no-exceptions)
 3. [The 12 Non-Negotiable Laws](#the-12-non-negotiable-laws)
-4. [Enterprise Platform & Compatibility Matrix](#enterprise-platform--compatibility-matrix)
+4. [Enterprise Platform & Compatibility Matrix](#enterprise-platform-compatibility-matrix)
 5. [The Right-Sized Architecture (Tier 1/2/3)](#the-right-sized-architecture-choose-by-tool-size)
 6. [The 21 Canonical Patterns](#the-21-canonical-patterns-memorize-these)
-7. [The Design System — Tailwind Slate Tokens](#the-design-system--tailwind-slate)
+7. [The Design System — Tailwind Slate Tokens](#the-design-system-tailwind-slate)
 8. [The 19 Required XAML Styles](#the-19-required-xaml-styles)
 9. [The Log Levels & UI Colors](#the-log-levels-exact-colors)
 10. [Intune & Graph API Best Practices](#intune-best-practices)
@@ -489,7 +489,7 @@ A README without shields.io badges or a Disclaimer section fails review even whe
 
 **Key principles:** shields.io badges (`License`, `PowerShell 5.1+`, `Platform`, `Intune` if pair), emojis for scan, tables for exit codes/settings, ` ```powershell` + ` ```text` language tags, `---` between sections.
 
-**Visual Identity — Variable Header, Fixed Body:** The header emoji (`# <emoji> Title`) is **variable per project/script name** (e.g., 🏢 AD, 📊 Report, 🛡️ Intune, 🪟 Windows, 🖥️ GUI, ☁️ M365 — see `references/readme-template.md` Icon Policy mapping). All other section icons are **fixed** as the skill's unified signature: `📖 Overview, ✨ Features, 📂 Structure, 🚀 Usage, ⚙️ Requirements/Parameters, 🧰 Core Commands, 🔍 Troubleshooting, ❓ FAQ, 🛡 Operational Notes, 📜 License, 👤 Author, ⚠ Disclaimer` + footer `⭐` + optional `> Built with **PowerShell Enterprise Admin**`. This fixed set + shields.io badges makes any README instantly recognizable as this skill's work.
+**Visual Identity — Centered Hero Header, Fixed Body:** Every README opens with a **centered hero header** (`<div align="center">` wrapping the title, bold tagline, optional one-line description, and the shields.io badges — see `references/readme-template.md` → *Canonical Header*). The header emoji (`# <emoji> Title`) is **variable per project/script name** (e.g., 🏢 AD, 📊 Report, 🛡️ Intune, 🪟 Windows, 🖥️ GUI, ☁️ M365 — see `references/readme-template.md` Icon Policy mapping). All other section icons are **fixed** as the skill's unified signature: `📖 Overview, ✨ Features, 📂 Structure, 🚀 Usage, ⚙️ Requirements/Parameters, 🧰 Core Commands, 🔍 Troubleshooting, ❓ FAQ, 🛡 Operational Notes, 📜 License, 👤 Author, ⚠ Disclaimer` + footer `⭐` + signature line `Built with [**PowerShell Enterprise Admin**](https://github.com/mabdulkadr/powershell-enterprise-admin-skill)` (plain linked line inside the footer's center div — no blockquote). This fixed set + shields.io badges makes any README instantly recognizable as this skill's work.
 
 Full templates + badge reference + section examples → `references/readme-template.md` (canonical). Also see `references/_header-canonical.md` for header consistency.
 
@@ -536,7 +536,7 @@ Then:
 6. **`references/design-tokens.md`** — Complete Tailwind Slate color tokens + light/dark overrides + spacing + typography (canonical for `SKILL.md` Design System)
 7. **`references/xaml-styles.md`** — Full XAML for every required style (BtnBase hierarchy, Card, StatCard, InputBox, NavBtnBase, StyledCheckBox, StyledComboBox, LiveMessageCenterBox, SessionCard)
 8. **`references/patterns.md`** — The 21 canonical patterns (A–U)
-9. **`references/pitfalls.md`** — 20+ documented PS 5.1 crash causes and fixes
+9. **`references/pitfalls.md`** — Documented PS 5.1 crash causes and fixes
 10. **`references/icons.md`** — SVG path data for the standard icon set
 11. **`references/script-template.md`** — CLI header + Description quality bar + examples (extends `_header-canonical.md`)
 12. **`references/intune-patterns.md`** — Intune/Graph remediation pairs, Azure Automation auth, Graph pointers (extends `_header/_logging/_graph` canonicals)

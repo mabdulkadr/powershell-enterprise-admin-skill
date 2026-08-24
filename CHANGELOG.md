@@ -5,6 +5,26 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versio
 
 ---
 
+---
+
+## [Unreleased]
+
+### Added
+
+- README standard: centered hero header (title + tagline + badges inside `<div align="center">`) and linked signature footer (`Built with [**PowerShell Enterprise Admin**](repo URL)`) — applied to all 4 `readme-*.template.md` variants, documented as *Canonical Header* in `references/readme-template.md` and in the SKILL.md Visual Identity rule
+- Four new pitfalls in `references/pitfalls.md`: invisible U+FEFF ghosts after programmatic splices (+ AST ghost scan), `-replace` case-insensitivity (`-creplace`), Parse-first XAML loader order, delivery hash baseline / external-drift protocol
+- Inline guidance: `DockPanel LastChildFill="False"` header rows, headless clipboard trap, alias-like words inside HelpMessage strings
+
+### Changed
+
+- `lessons-learned.md` register reset: all 30 accumulated entries reviewed and absorbed into the skill body; register kept as the live inbox with a Promotion Archive table
+- README version badge aligned with CHANGELOG latest release
+
+### Fixed
+
+- Three broken TOC anchors in SKILL.md (double-hyphen slugs pointing at single-hyphen headings)
+- Stale counts removed from README/SKILL.md (pitfalls count now count-free; scripts folder description matches tree)
+
 ## [1.2] - 2026-08-23
 
 ### Added

@@ -12,7 +12,7 @@ One standard. Every tool looks, runs, and logs the same way — production-grade
 [![Theme](https://img.shields.io/badge/Theme-Light%20%2F%20Dark-8B5CF6?style=for-the-badge)](#-design-system)
 [![Evals](https://img.shields.io/badge/Evals-25%20Scenarios-10B981?style=for-the-badge)](#-test-everything)
 [![License](https://img.shields.io/badge/License-MIT-F59E0B?style=for-the-badge)](#-license)
-[![Version](https://img.shields.io/badge/Version-1.1.0-334155?style=for-the-badge)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-1.2-334155?style=for-the-badge)](CHANGELOG.md)
 
 [How It Works](#-how-it-works) • [Quick Start](#-quick-start) • [12 Laws](#-the-12-laws) • [Design System](#-design-system) • [FAQ](#-faq)
 
@@ -171,7 +171,7 @@ powershell-enterprise-admin/
 │   ├── design-tokens.md      #   Every color, spacing, and font value
 │   ├── xaml-styles.md        #   Full XAML for all 19 required styles
 │   ├── patterns.md           #   Code for all 21 canonical patterns
-│   ├── pitfalls.md           #   25+ documented PS 5.1 crash causes and fixes
+│   ├── pitfalls.md           #   Documented PS 5.1 crash causes and fixes
 │   ├── icons.md              #   SVG path library (no fonts)
 │   └── ...                   #   AD, WinRM, event logs, Intune, macOS, packaging
 │
@@ -353,6 +353,6 @@ Website: [momar.tech](https://momar.tech)
 
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/mabdulkadrx)
 
- Built with **PowerShell Enterprise Admin**
+ Built with [**PowerShell Enterprise Admin**](https://github.com/mabdulkadr/powershell-enterprise-admin-skill)
 
 </div>

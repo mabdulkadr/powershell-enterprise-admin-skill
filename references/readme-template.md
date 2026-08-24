@@ -11,6 +11,36 @@
 
 ---
 
+## Canonical Header — Centered Hero (every variant opens with this)
+
+The header is a **centered hero**: variable emoji title, bold tagline, optional one-line description, then the shields.io badges — all inside `<div align="center">`, closed before the first body section.
+
+```html
+<div align="center">
+
+# <emoji> [Project Name]
+
+**[Bold tagline — the value statement]**
+
+[Optional one-sentence description.]
+
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![PowerShell](https://img.shields.io/badge/powershell-5.1%2B-blue.svg)
+![Platform](https://img.shields.io/badge/Windows-10%2F11-blue.svg)
+
+</div>
+
+---
+```
+
+Rules:
+
+- The `<emoji>` follows the Icon Policy mapping below — variable per project.
+- Badges ALWAYS sit inside the hero div; never scatter them through the body.
+- Close `</div>` before the first `# 📖 Overview` heading.
+
+---
+
 ## Smart Sectioning — Conditional Sections by Script Type
 
 Sections are **variable per script type, not fixed**. Pick the matching variant above and include only the sections its row allows:
@@ -133,20 +163,18 @@ Do not invent new icons for these sections — the fixed set is the skill's sign
 ```html
 <div align="center">
 
-### ⭐ Support the Project
-
-**If this tool saved you time, please star the repository** — it helps others discover it.
+⭐ **If this skill saves you time, star the repo — it helps others find it.**
 
 [Report an Issue](../../issues) · [momar.tech](https://momar.tech)
 
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/mabdulkadrx)
 
-> **PowerShell Enterprise Admin** — *Enterprise PowerShell Tooling*
+Built with [**PowerShell Enterprise Admin**](https://github.com/mabdulkadr/powershell-enterprise-admin-skill)
 
 </div>
 ```
 
-This footer + the fixed body icons + shields.io badges together form the skill's recognizable identity.
+This footer + the centered hero header + the fixed body icons + shields.io badges together form the skill's recognizable identity.
 
 ---
 
