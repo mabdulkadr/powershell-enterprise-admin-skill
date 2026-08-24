@@ -17,9 +17,9 @@
 
 > **One design language. Zero UI freezes. Predictable logs. A gate that actually blocks drift.**
 
-*Distilled from **Enterprise patterns**, **Enterprise patterns**, **Enterprise patterns** and **Enterprise patterns** — not from theory, but from production bugs that shipped.*
+*Distilled from production enterprise deployments — not from theory, but from bugs that shipped.*
 
-[Quick Start](#-quick-start--installation) • [The 12 Laws](#-the-12-non-negotiable-laws) • [21 Patterns](#-the-21-canonical-patterns) • [Design System](#-tailwind-slate-design-system)
+[Quick Start](#-quick-start--30-seconds-for-any-ai-agent) • [The 12 Laws](#-the-12-non-negotiable-laws) • [21 Patterns](#-the-21-canonical-patterns) • [Design System](#-tailwind-slate-design-system)
 
 </div>
 
