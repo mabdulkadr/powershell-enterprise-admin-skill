@@ -7,7 +7,7 @@
 One standard. Every tool looks, runs, and logs the same way — production-grade, every time.
 
 [![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-5391FE?style=for-the-badge&logo=powershell&logoColor=white)](https://learn.microsoft.com/en-us/powershell/)
-[![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11%20%7C%20Server%202016%2B-0F172A?style=for-the-badge)](#-works-on)
+[![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11%20-0F172A?style=for-the-badge)](#-works-on)
 [![UI](https://img.shields.io/badge/UI-WPF%20Tailwind%20Slate-3B82F6?style=for-the-badge&logo=windows&logoColor=white)](#-design-system)
 [![Theme](https://img.shields.io/badge/Theme-Light%20%2F%20Dark-8B5CF6?style=for-the-badge)](#-design-system)
 [![Evals](https://img.shields.io/badge/Evals-25%20Scenarios-10B981?style=for-the-badge)](#-test-everything)
