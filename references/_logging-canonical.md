@@ -42,8 +42,28 @@ Consecutive-duplicate guard via `$script:lastLogKey` — drops immediate duplica
 
 Level set is exactly `INFO, SUCCESS, WARNING, ERROR, DEBUG` — no `DIVIDER`.
 
+## Empty-Message Spacer Rule (Pitfall 30)
+
+Callers commonly use `Write-Log -Message ""` or `Add-LogLine -Message ""` as a
+visual spacer between sections. PowerShell's `[Parameter(Mandatory = $true)]`
+treats an empty string as a missing value, so a Mandatory `Message` crashes
+the FIRST spacer line before any real content reaches the log. Every logging
+helper in this skill declares:
+
+```powershell
+[Parameter(Mandatory = $false)]
+[AllowEmptyString()]
+[string]$Message = "",
+...
+if ([string]::IsNullOrEmpty($Message)) { return }
+```
+
+`Finish-Script -Message` stays Mandatory (it is a true summary line, never a
+spacer). This is enforced by `Test-ToolCompliance.ps1` (Pitfall 30 gate).
+
 ## Rules
 
 - CLI scripts use `Write-Log`, never `Add-LogLine`.
 - Every exit path uses `Finish-Script` (Intune) or explicit `Write-Log` + `exit`.
 - `Get-Content -Raw -Encoding UTF8` when reading logs on PS 5.1 (see `lessons-learned.md` ps51-verification-encoding).
+- `Message` parameter is **non-Mandatory + AllowEmptyString + default "" + early-return** — see Empty-Message Spacer Rule above.

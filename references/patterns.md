@@ -890,9 +890,11 @@ function Send-NativeWindowsToast {
 
 ---
 
-## Pattern U: Responsive HTML Executive Report Generator
+## Pattern U: Responsive HTML Executive Report Generator (IBM Carbon Dark — Canonical)
 
-Generates a standalone, responsive, modern HTML report styled with Tailwind Slate design tokens. Includes a gradient hero (with serial badge), KPI cards with sub-captions, a Security & Power strip (TPM pills + battery bar), Storage Volumes as color-coded animated bars (ok >=20% free / warn 10-19 / crit <10), Memory/GPU/Physical-disk tables with empty-state fallbacks, an extended network table (Gateway/DNS/DHCP pill), client-side search + click-to-sort tables (numeric-aware, zero dependencies), dark mode via data-theme+localStorage+prefers-color-scheme, and print styles.
+> **Canonical source:** `templates/EnterpriseHtmlReport.template.ps1` — do NOT copy the inline example below as the source of truth. The inline code is a minimal Tailwind Slate fallback illustration only; every production HTML report MUST use the IBM Carbon Dark helpers `Get-StandardHtmlHead / Get-StandardHtmlOpen / Get-StandardHtmlFooter / Get-StandardHtmlClose` from the canonical template. See SKILL.md `The HTML Design System — IBM Carbon Dark` and `templates/EnterpriseHtmlReport.template.ps1` (header + KPI bar + Carbon tokens `--cds-*`).
+
+Generates a standalone, responsive, modern HTML report. The canonical Carbon Dark version includes a gradient hero (with serial badge), KPI cards with sub-captions, a Security & Power strip (TPM pills + battery bar), Storage Volumes as color-coded animated bars (ok >=20% free / warn 10-19 / crit <10), Memory/GPU/Physical-disk tables with empty-state fallbacks, an extended network table (Gateway/DNS/DHCP pill), client-side search + click-to-sort tables (numeric-aware, zero dependencies), dark mode via data-theme+localStorage+prefers-color-scheme, and print styles.
 
 ```powershell
 function Export-ExecutiveHtmlReport {

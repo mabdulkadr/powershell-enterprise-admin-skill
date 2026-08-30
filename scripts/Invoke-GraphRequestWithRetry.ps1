@@ -1,4 +1,4 @@
-<#
+﻿<#
 .TITLE
     Invoke-GraphRequestWithRetry
 
@@ -55,7 +55,7 @@
     1.0.0 - Initial release
 
 .LASTUPDATE
-    2026-08-22
+    2026-08-20
 
 .EXAMPLE
     Invoke-GraphRequestWithRetry -Uri 'https://graph.microsoft.com/v1.0/devices' -Service 'EntraID'

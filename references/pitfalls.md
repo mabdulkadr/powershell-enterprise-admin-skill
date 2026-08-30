@@ -1,6 +1,6 @@
 # Known Pitfalls — PS 5.1 WPF
 
-Every crash listed here was debugged in production. The fix is included. Read this file before you start writing WPF — these are the 20+ ways to crash the tool at ShowDialog or runtime.
+Every crash listed here was debugged in production. The fix is included. Read this file before you start writing WPF — these are the 21+ ways to crash the tool at ShowDialog or runtime.
 
 ---
 
@@ -825,4 +825,31 @@ Select-String -Path .\Get-DeviceInventory.ps1 -Pattern '\$ExportFormat\s*=\s*'
 1. Capture a `Get-FileHash` baseline CSV at delivery time; re-check it before every follow-up session.
 2. During verification, diff observed defaults against the documented `.PARAMETER` contract - treat any mismatch as external drift first, code bug second.
 3. Run `Test-Skill.ps1` after ANY bulk file work - inventory drift gets caught immediately.
+
+## Pitfall: Mandatory `[string]` Parameter Crashes When Called With Empty Spacer
+
+`Find-IntunePolicyConflict.ps1` (and every CLI script that copies the canonical `Write-Log` verbatim) crashed at the first device-lookup line with `Cannot bind argument to parameter 'Message' because it is an empty string` after a successful Graph sign-in. Every `Write-Log -Message ""` visual separator — used freely to break sections vertically — crashes before the timestamp/color logic runs because PowerShell's Mandatory binding treats an empty string as a missing value. The same script-local `Write-Log` and the canonical `scripts/Write-Log.ps1` both share the `[Parameter(Mandatory = $true)] [string]$Message` declaration, so this is a latent crash in the canonical helper itself, not just one downstream consumer.
+
+```powershell
+# ? Breaks at first spacer line
+[Parameter(Mandatory = $true)]
+[string]$Message,
+...
+Write-Log -Message "Signed in as: $($context.Account)" -Level 'SUCCESS'   # ok
+Write-Log -Message "" -Level 'INFO'                                       # CRASH
+
+# ? Allow empty + early-return so spacers no-op
+[Parameter(Mandatory = $false)]
+[AllowEmptyString()]
+[string]$Message = "",
+...
+if ([string]::IsNullOrEmpty($Message)) { return }
+$timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+$logLine = "[$timestamp] [$Level] $Message"
+```
+
+**Rules:**
+1. Any logging helper that is called with `""` as a visual separator MUST declare `Message` as non-Mandatory with `[AllowEmptyString()]` and default `""`, then early-return on empty — mandatory + empty is a binding error, not a no-op.
+2. The canonical `scripts/Write-Log.ps1` (and any `Write-Log` it copies) must apply the same fix in the next release; until then, every CLI script that uses `Write-Log -Message ""` as a spacer needs the same declaration.
+3. When auditing a script for this crash, grep `Write-Log -Message ""` and `Add-LogLine -Message ""` — every hit is a guaranteed crash before the next non-empty line.
 

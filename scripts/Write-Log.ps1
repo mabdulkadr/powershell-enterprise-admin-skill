@@ -1,4 +1,4 @@
-<#
+﻿<#
 .TITLE
     Write-Log
 
@@ -35,15 +35,19 @@
     AI Generated
 
 .VERSION
-    1.1.0
+    1.2.0
 
 .CHANGELOG
+    1.2.0 (2026-08-30)
+    - AllowEmptyString on Write-Log -Message + early-return guard (Lesson
+      2026-08-30 Find-IntunePolicyConflict). Mandatory + empty was a binding
+      crash; visual spacers (`Write-Log -Message ""`) now no-op cleanly.
     1.1.0 (2026-08-20)
     - Canonical rich header upgrade to Enterprise Standards field order
     1.0.0 - Initial release
 
 .LASTUPDATE
-    2026-08-22
+    2026-08-30
 
 .EXAMPLE
     $script:LogReady = Initialize-Log -SolutionName 'BitLockerRemediation' -ScriptMode 'detect'
@@ -123,11 +127,18 @@ function Write-Banner {
 function Write-Log {
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)]
-        [string]$Message,
+        [Parameter(Mandatory = $false)]
+        [AllowEmptyString()]
+        [string]$Message = "",
         [ValidateSet("INFO", "SUCCESS", "WARNING", "ERROR", "DEBUG")]
         [string]$Level = "INFO"
     )
+
+    # Visual spacer support: callers commonly use `Write-Log -Message ""` to break
+    # sections vertically. PowerShell's Mandatory binding treats an empty string
+    # as a missing value, so the canonical helper MUST early-return on empty -
+    # see Lesson 2026-08-30 | Find-IntunePolicyConflict | CLI logging / Mandatory parameter.
+    if ([string]::IsNullOrEmpty($Message)) { return }
 
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     $logLine = "[$timestamp] [$Level] $Message"

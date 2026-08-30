@@ -1,4 +1,4 @@
-<#
+﻿<#
 .TITLE
     Guard-Action
 
@@ -26,15 +26,18 @@
     AI Generated
 
 .VERSION
-    1.1.0
+    1.1.1
 
 .CHANGELOG
+    1.1.1 (2026-08-30)
+    - Fixed typo: $.LASTUPDATE was `$12026-08-20` (missing dot prefix on field
+      keyword) - now parses correctly as a comment-based help field.
     1.1.0 (2026-08-20)
     - Canonical rich header upgrade to Enterprise Standards field order
     1.0.0 - Initial release
 
 .LASTUPDATE
-    2026-08-22
+    2026-08-30
 
 .EXAMPLE
     if (-not (Guard-Action 'Export CSV')) { return }

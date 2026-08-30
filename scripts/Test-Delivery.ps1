@@ -1,4 +1,4 @@
-<#
+﻿<#
 .TITLE
     Test-Delivery - One-shot delivery verifier
 
@@ -27,16 +27,20 @@
     AI Generated
 
 .VERSION
-    1.0.0
+    1.1.0
 
 .CHANGELOG
+    1.1.0 (2026-08-25)
+    - New Stage 2b: README template-fidelity gate via scripts/Test-ReadmeFidelity.ps1
+      when -ReadmePath is provided. Created after a delivered GUI README drifted
+      from its variant template with no automated check to catch it.
     1.0.0 (2026-08-23)
     - Initial release: created after a delivered CLI tool passed pwsh checks but
       crashed PS 5.1 on a standalone [HelpMessage()] attribute; consolidates the
       delivery loop into one command.
 
 .LASTUPDATE
-    2026-08-23
+    2026-08-25
 
 .EXAMPLE
     .\Test-Delivery.ps1 -ScriptPath C:\Tools\Disable-IPv6.ps1 -ReadmePath C:\Tools\docs\README.md -SmokeTest
@@ -109,12 +113,28 @@ if ($ReadmePath) { $gateArguments += @('-ReadmePath', $ReadmePath) }
 & $hostExecutable @gateArguments
 if ($LASTEXITCODE -ne 0) { $script:Failures++ }
 
+# --- Stage 2b: README template-fidelity gate ---------------------------------
+
+if ($ReadmePath -and (Test-Path -LiteralPath $ReadmePath)) {
+    Write-Stage "README fidelity gate"
+    $fidelityArguments = @(
+        '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
+        (Join-Path $PSScriptRoot 'Test-ReadmeFidelity.ps1'),
+        '-ReadmePath', $ReadmePath
+    )
+    & $hostExecutable @fidelityArguments
+    if ($LASTEXITCODE -ne 0) { $script:Failures++ }
+}
+
 # --- Stage 3: PS 5.1 smoke test ----------------------------------------------
 
 if ($SmokeTest) {
     Write-Stage "PS 5.1 smoke test (-WhatIf)"
+    $prevEAP = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
     $smokeOutput = & powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ". '$ScriptPath' -WhatIf" 2>&1
     $smokeExitCode = $LASTEXITCODE
+    $ErrorActionPreference = $prevEAP
     foreach ($line in @($smokeOutput | Select-Object -Last 4)) {
         Write-Host ("  | {0}" -f $line) -ForegroundColor DarkGray
     }

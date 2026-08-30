@@ -1,4 +1,4 @@
-<#
+﻿<#
 .TITLE
     Test-XamlFile
 
@@ -39,7 +39,7 @@
     1.0.0 - Initial release
 
 .LASTUPDATE
-    2026-08-22
+    2026-08-20
 
 .EXAMPLE
     Test-XamlFile -Content $xaml

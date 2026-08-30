@@ -1,4 +1,4 @@
-<#
+﻿<#
 .TITLE
     Connect-GraphAuth
 
@@ -49,7 +49,7 @@
     1.0.0 - Initial release
 
 .LASTUPDATE
-    2026-08-22
+    2026-08-20
 
 .EXAMPLE
     Connect-GraphAuth -Mode DeviceCode -Scopes @('DeviceManagementManagedDevices.ReadWrite.All')

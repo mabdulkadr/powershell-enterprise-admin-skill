@@ -1,4 +1,4 @@
-<#
+﻿<#
 .TITLE
     Get-MgGraphAllPages
 
@@ -42,7 +42,7 @@
     1.0.0 - Initial release
 
 .LASTUPDATE
-    2026-08-22
+    2026-08-20
 
 .EXAMPLE
     $devices = Get-MgGraphAllPages -Uri "https://graph.microsoft.com/v1.0/devices?`$select=id,displayName"

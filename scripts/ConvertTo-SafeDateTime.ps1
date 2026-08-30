@@ -1,4 +1,4 @@
-<#
+﻿<#
 .TITLE
     ConvertTo-SafeDateTime
 
@@ -36,7 +36,7 @@
     1.0.0 - Initial release
 
 .LASTUPDATE
-    2026-08-22
+    2026-08-20
 
 .EXAMPLE
     ConvertTo-SafeDateTime -Value '2026-08-20T10:56:00.1234567Z'

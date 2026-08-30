@@ -1,4 +1,4 @@
-<#
+﻿<#
 .TITLE
     Add-LogLine
 
@@ -29,15 +29,19 @@
     AI Generated
 
 .VERSION
-    1.1.0
+    1.2.0
 
 .CHANGELOG
+    1.2.0 (2026-08-30)
+    - AllowEmptyString on Add-LogLine -Message + early-return guard (Lesson
+      2026-08-30 Find-IntunePolicyConflict). Mandatory + empty was a binding
+      crash; visual spacers (`Add-LogLine -Message ""`) now no-op cleanly.
     1.1.0 (2026-08-20)
     - Canonical rich header upgrade to Enterprise Standards field order
     1.0.0 - Initial release
 
 .LASTUPDATE
-    2026-08-22
+    2026-08-30
 
 .EXAMPLE
     Add-LogLine -Message 'Operation completed successfully' -Level 'SUCCESS'
@@ -58,11 +62,19 @@ $script:lastLogKey = $null
 function Add-LogLine {
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)]
-        [string]$Message,
+        [Parameter(Mandatory = $false)]
+        [AllowEmptyString()]
+        [string]$Message = "",
         [ValidateSet('INFO', 'SUCCESS', 'WARNING', 'ERROR', 'DEBUG')]
         [string]$Level = 'INFO'
     )
+
+    # Visual spacer support: callers commonly use `Add-LogLine -Message ""` to
+    # break sections vertically. PowerShell's Mandatory binding treats an empty
+    # string as a missing value, so the canonical helper MUST early-return on
+    # empty - see Lesson 2026-08-30 | Find-IntunePolicyConflict | CLI logging /
+    # Mandatory parameter. The Add-LogLine sibling of Write-Log has the same fix.
+    if ([string]::IsNullOrEmpty($Message)) { return }
 
     # Log noise guard: drop exact duplicate lines sent consecutively
     $currentLogKey = "$Level|$Message"

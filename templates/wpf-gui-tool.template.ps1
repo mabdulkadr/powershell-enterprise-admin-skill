@@ -128,51 +128,17 @@ $script:OnLogEntry = {
 
 # ============================================================================
 # SETTINGS PERSISTENCE (Pattern Q — settings.json in %LOCALAPPDATA%)
-# Canonical: Get-AppSettings / Set-AppSettings (references/patterns.md).
-# Template aliases Load-UserSettings / Save-UserSettings kept for back-compat.
+# Canonical: dot-source scripts/Settings.ps1 - never re-type.
+# Single source of truth: scripts/Settings.ps1 (Get-AppSettings / Set-AppSettings
+# + back-compat aliases Load-UserSettings / Save-UserSettings).
 # Security: never include passwords or client secrets in $Settings.
 # ============================================================================
 
-function Get-AppSettings {
-    [CmdletBinding()]
-    param([string]$ToolNameOverride)
-    $raw = if ($ToolNameOverride) { $ToolNameOverride } elseif ($ToolName -and $ToolName -ne '[ToolName]') { $ToolName } elseif ($script:ToolName -and $script:ToolName -ne '[ToolName]') { $script:ToolName } elseif ($PSCommandPath) { [System.IO.Path]::GetFileNameWithoutExtension($PSCommandPath) } else { 'PowerShellApp' }
-    if ($raw -like '*.template') { $raw = $raw.Substring(0, $raw.Length - 9) }
-    if ([string]::IsNullOrWhiteSpace($raw) -or $raw -eq '[ToolName]') { $raw = 'PowerShellApp' }
-    $effectiveName = $raw
-    $path = Join-Path $env:LOCALAPPDATA "$effectiveName\settings.json"
-    if (Test-Path -LiteralPath $path) {
-        try { return (Get-Content -LiteralPath $path -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop) } catch { return [PSCustomObject]@{} }
-    }
-    return [PSCustomObject]@{}
+$_canonicalSettings = Join-Path (Split-Path -Parent $_scriptRoot) 'scripts/Settings.ps1'
+if (-not (Test-Path -LiteralPath $_canonicalSettings)) {
+    throw "Canonical settings module not found at: $_canonicalSettings"
 }
-
-function Set-AppSettings {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $true)][hashtable]$Settings,
-        [string]$ToolNameOverride
-    )
-    $raw = if ($ToolNameOverride) { $ToolNameOverride } elseif ($ToolName -and $ToolName -ne '[ToolName]') { $ToolName } elseif ($script:ToolName -and $script:ToolName -ne '[ToolName]') { $script:ToolName } elseif ($PSCommandPath) { [System.IO.Path]::GetFileNameWithoutExtension($PSCommandPath) } else { 'PowerShellApp' }
-    if ($raw -like '*.template') { $raw = $raw.Substring(0, $raw.Length - 9) }
-    if ([string]::IsNullOrWhiteSpace($raw) -or $raw -eq '[ToolName]') { $raw = 'PowerShellApp' }
-    $effectiveName = $raw
-    $dir = Join-Path $env:LOCALAPPDATA $effectiveName
-    if (-not (Test-Path -LiteralPath $dir)) { $null = New-Item -ItemType Directory -Path $dir -Force -ErrorAction SilentlyContinue }
-    $path = Join-Path $dir 'settings.json'
-    try { $Settings | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $path -Encoding UTF8 -Force -ErrorAction Stop } catch { Write-Warning "Save settings failed: $($_.Exception.Message)" }
-}
-
-function Load-UserSettings {
-    [CmdletBinding()] param([string]$ToolNameOverride)
-    if ($PSBoundParameters.ContainsKey('ToolNameOverride')) { return Get-AppSettings -ToolNameOverride $ToolNameOverride }
-    return Get-AppSettings
-}
-
-function Save-UserSettings {
-    [CmdletBinding()] param([Parameter(Mandatory = $true)][hashtable]$Settings, [string]$ToolNameOverride)
-    if ($PSBoundParameters.ContainsKey('ToolNameOverride')) { Set-AppSettings -Settings $Settings -ToolNameOverride $ToolNameOverride } else { Set-AppSettings -Settings $Settings }
-}
+. (Get-Item -LiteralPath $_canonicalSettings).FullName
 # ============================================================================
 # WPF ASSEMBLIES + THEME TOKENS (Tailwind Slate - references/design-tokens.md)
 # ============================================================================
@@ -1052,24 +1018,14 @@ function Show-AboutDialog {
 }
 
 # ============================================================================
-# STATE + GUARDS (canonical: scripts/Guard-Action.ps1)
+# STATE + GUARDS (canonical: dot-source scripts/Guard-Action.ps1 - never re-type)
 # ============================================================================
 
-$script:isBusy = $false
-
-# Busy guard - returns $false when an operation is already running (Pattern H).
-function Guard-Action {
-    [CmdletBinding()]
-    param([string]$ActionName)
-    if ($script:isBusy) {
-        Add-LogLine -Message "Operation in progress - please wait: $ActionName" -Level 'WARNING'
-        return $false
-    }
-    $script:isBusy = $true
-    return $true
+$_canonicalGuard = Join-Path (Split-Path -Parent $_scriptRoot) 'scripts/Guard-Action.ps1'
+if (-not (Test-Path -LiteralPath $_canonicalGuard)) {
+    throw "Canonical guard module not found at: $_canonicalGuard (copy scripts/Guard-Action.ps1 from the skill before running this template)."
 }
-
-function Release-Action { $script:isBusy = $false } # Clears the busy flag (finally-block partner of Guard-Action).
+. (Get-Item -LiteralPath $_canonicalGuard).FullName
 
 # Runs a scriptblock on the UI dispatcher thread; cross-thread safe, logs failures.
 function Invoke-SafeUIAction {

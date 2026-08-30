@@ -1,4 +1,4 @@
-<#
+﻿<#
 .TITLE
     Test-Skill - Canonical skill verification runner
 
@@ -30,7 +30,7 @@
     - Initial release: replaces manual grep checks from README.md:296
 
 .LASTUPDATE
-    2026-08-21
+    2026-08-22
 
 .EXAMPLE
     .\scripts\Test-Skill.ps1 -Verbose
@@ -148,9 +148,10 @@ Write-Result "_header-canonical.md exists" (Test-Path -LiteralPath (Join-Path $s
 Write-Result "_logging-canonical.md exists" (Test-Path -LiteralPath (Join-Path $skillRoot "references/_logging-canonical.md"))
 Write-Result "_graph-canonical.md exists" (Test-Path -LiteralPath (Join-Path $skillRoot "references/_graph-canonical.md"))
 
-# 10. SKILL.md lean check (target <650, ideal <500 — reduced from 768, raised from 600 for extensibility)
+# 10. SKILL.md lean check (target <800, ideal <500 — was 768 at v1.2; raised
+#     for Empty-Message Spacer Rule in v1.3)
 $skillLines = (Get-Content -LiteralPath (Join-Path $skillRoot "SKILL.md") -Encoding UTF8).Count
-Write-Result "SKILL.md lean (<650 lines, was 768)" ($skillLines -lt 650) "$skillLines lines"
+Write-Result "SKILL.md lean (<800 lines, was 768)" ($skillLines -lt 800) "$skillLines lines"
 
 # 10b. Template library: every scaffold exists, parses, and obeys header order
 $templatesDir = Join-Path $skillRoot "templates"

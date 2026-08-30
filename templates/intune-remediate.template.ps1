@@ -107,9 +107,15 @@ if (-not (Test-Path -LiteralPath $_canonicalLogging)) {
 function Write-RemediationLog {
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)][string]$Message,
+        [Parameter(Mandatory = $false)]
+        [AllowEmptyString()]
+        [string]$Message = "",
         [ValidateSet('Info', 'Warning', 'Error')][string]$Level = 'Info'
     )
+    # Visual spacer support: `Write-RemediationLog -Message ""` no-ops cleanly
+    # (Lesson 2026-08-30 | Find-IntunePolicyConflict). Same AllowEmptyString
+    # + early-return pattern as the canonical Write-Log helper.
+    if ([string]::IsNullOrEmpty($Message)) { return }
     # Console/file via canonical Write-Log + structured record for JSON output.
     $mapped = switch ($Level) { 'Warning' { 'WARNING' } 'Error' { 'ERROR' } default { 'INFO' } }
     Write-Log -Message $Message -Level $mapped
@@ -204,7 +210,7 @@ try {
     Write-RemediationLog "Performing post-remediation verification..." -Level 'Info'
     $verificationPassed = Test-FixApplied
 
-    if ($targetCount -gt 0 -and $failedCount -ge $targetCount) {
+    if ($targetCount -gt 0 -and $script:failedCount -ge $targetCount) {
         $verificationPassed = $false
     }
 
@@ -214,7 +220,7 @@ try {
         $script:remediationResult.PostCheckStatus += "Verification passed after remediation"
 
         Write-Output "Remediation completed successfully"
-        Write-Output "Targets processed: $targetCount (failed: $failedCount)"
+        Write-Output "Targets processed: $targetCount (failed: $script:failedCount)"
         Write-Output ($remediationResult | ConvertTo-Json -Depth 6 -Compress)
 
         Finish-Script -ExitCode 0 -Message "Remediation completed successfully" -Level 'SUCCESS'

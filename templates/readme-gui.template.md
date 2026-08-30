@@ -2,16 +2,18 @@
 
 # 🖥️ [Tool Name]
 
-**WPF GUI Tool**
+**[Brief Description]**
 
-[A friendly interface for [task] — one sentence on what it does.]
+[One sentence explaining what the script does and for whom.]
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![PowerShell](https://img.shields.io/badge/powershell-5.1%2B-blue.svg)
-![Platform](https://img.shields.io/badge/Windows-10%2F11-blue.svg)
-![UI](https://img.shields.io/badge/UI-WPF%20GUI-blue.svg)
-![Theme](https://img.shields.io/badge/Theme-Tailwind%20Slate-brightgreen.svg)
-![Version](https://img.shields.io/badge/version-[Version]-green.svg)
+[![UI](https://img.shields.io/badge/UI-WPF%20Tailwind%20Slate-3B82F6?style=for-the-badge&logo=windows&logoColor=white)](#%EF%B8%8F-usage)
+[![Theme](https://img.shields.io/badge/Theme-Light%20%2F%20Dark-8B5CF6?style=for-the-badge)](#%EF%B8%8F-usage)
+[![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-5391FE?style=for-the-badge&logo=powershell&logoColor=white)](https://learn.microsoft.com/en-us/powershell/)
+[![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-0F172A?style=for-the-badge)](#%EF%B8%8F-requirements)
+[![License](https://img.shields.io/badge/License-MIT-F59E0B?style=for-the-badge)](#-license)
+[![Version](https://img.shields.io/badge/Version-1.0.0-334155?style=for-the-badge)](#-overview)
+
+[Overview](#-overview) • [Features](#-core-features) • [Usage](#%EF%B8%8F-usage) • [Requirements](#%EF%B8%8F-requirements) • [License](#-license)
 
 </div>
 
@@ -68,7 +70,7 @@
 
 # 🖥️ Usage
 
-This section exists ONLY in GUI tool READMEs — never in CLI or Intune pair READMEs.
+<!-- This section is GUI-only. Remove when adapting to CLI/Intune variants. -->
 
 ### Main Window
 [Describe the interface: pages, sidebar, status bar.]

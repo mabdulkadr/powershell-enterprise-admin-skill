@@ -1,4 +1,4 @@
-<#
+﻿<#
 .TITLE
     Invoke-GraphBatchRequest
 
@@ -40,7 +40,7 @@
     1.0.0 - Initial release
 
 .LASTUPDATE
-    2026-08-22
+    2026-08-20
 
 .EXAMPLE
     $requests = @(

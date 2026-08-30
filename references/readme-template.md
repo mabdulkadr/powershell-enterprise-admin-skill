@@ -13,20 +13,23 @@
 
 ## Canonical Header — Centered Hero (every variant opens with this)
 
-The header is a **centered hero**: variable emoji title, bold tagline, optional one-line description, then the shields.io badges — all inside `<div align="center">`, closed before the first body section.
+The header is a **centered hero** identical in shape to the skill's own `README.md`: variable emoji title, then the two FIXED description lines (`**[Brief Description]**` bold tagline + `[One sentence explaining what the script does and for whom.]`), then **linked shields.io badges in `for-the-badge` style**, then a bullet-separated quick-nav row — all inside `<div align="center">`, closed before the first body section.
 
 ```html
 <div align="center">
 
 # <emoji> [Project Name]
 
-**[Bold tagline — the value statement]**
+**[Brief Description]**
 
-[Optional one-sentence description.]
+[One sentence explaining what the script does and for whom.]
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![PowerShell](https://img.shields.io/badge/powershell-5.1%2B-blue.svg)
-![Platform](https://img.shields.io/badge/Windows-10%2F11-blue.svg)
+[![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-5391FE?style=for-the-badge&logo=powershell&logoColor=white)](https://learn.microsoft.com/en-us/powershell/)
+[![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-0F172A?style=for-the-badge)](#%EF%B8%8F-requirements)
+[![License](https://img.shields.io/badge/License-MIT-F59E0B?style=for-the-badge)](#-license)
+[![Version](https://img.shields.io/badge/Version-1.0.0-334155?style=for-the-badge)](#-overview)
+
+[Overview](#-overview) • [Features](#-core-features) • [Usage](#-usage) • [Requirements](#%EF%B8%8F-requirements) • [License](#-license)
 
 </div>
 
@@ -37,6 +40,10 @@ Rules:
 
 - The `<emoji>` follows the Icon Policy mapping below — variable per project.
 - Badges ALWAYS sit inside the hero div; never scatter them through the body.
+- Every badge is **linked** (`[![Alt](shield-url)](anchor-or-url)`) with `?style=for-the-badge`.
+- **Slate palette** (matches the skill README): PowerShell `5391FE` + logo, Platform `0F172A`, License `F59E0B`, Version `334155`; variant extras — UI `3B82F6`, Theme `8B5CF6`, Intune `10B981`, Mode `334155`.
+- Minimum **five** shields.io badges inside the hero (enforced by `Test-ReadmeFidelity.ps1`); core three are PowerShell / Platform / License, plus Version plus the variant badge(s).
+- Nav row sits under the badges: bullet-separated (`•`) links to the README's main sections. Anchor pattern: `#-<lowercase-slug>` for plain-emoji headings, `#%EF%B8%8F-<slug>` when the heading emoji carries a variation selector (`⚙️`, `🖥️`).
 - Close `</div>` before the first `# 📖 Overview` heading.
 
 ---
@@ -182,53 +189,57 @@ This footer + the centered hero header + the fixed body icons + shields.io badge
 
 ## Badge Reference
 
+All badges use `?style=for-the-badge` and are wrapped as links. Colors come from the Tailwind Slate + semantic palette so every README matches the skill's own hero.
+
 ### 📜 License Badge
 
 ```markdown
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
+[![License](https://img.shields.io/badge/License-MIT-F59E0B?style=for-the-badge)](#-license)
 ```
 
 ### PowerShell Version Badge
 
 ```markdown
-![PowerShell](https://img.shields.io/badge/powershell-5.1%2B-blue.svg)
+[![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-5391FE?style=for-the-badge&logo=powershell&logoColor=white)](https://learn.microsoft.com/en-us/powershell/)
 ```
 
 ### Platform Badge
 
 ```markdown
-![Platform](https://img.shields.io/badge/Windows-10%2F11-blue.svg)
-```
-
-### Intune Automation Badge
-
-```markdown
-![Automation](https://img.shields.io/badge/Intune-Proactive%20Remediation-brightgreen.svg)
+[![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-0F172A?style=for-the-badge)](#%EF%B8%8F-requirements)
 ```
 
 ### Version Badge
 
 ```markdown
-![Version](https://img.shields.io/badge/version-1.0-green.svg)
+[![Version](https://img.shields.io/badge/Version-1.0.0-334155?style=for-the-badge)](#-overview)
 ```
 
-### UI Badge
+### Intune Automation Badge
 
 ```markdown
-![UI](https://img.shields.io/badge/UI-WPF%20GUI-blue.svg)
+[![Intune](https://img.shields.io/badge/Intune-Proactive%20Remediation-10B981?style=for-the-badge)](#-intune-deployment)
 ```
 
-### Theme Badge
+### UI Badge (GUI variant)
 
 ```markdown
-![Theme](https://img.shields.io/badge/Theme-Tailwind%20Slate-brightgreen.svg)
+[![UI](https://img.shields.io/badge/UI-WPF%20Tailwind%20Slate-3B82F6?style=for-the-badge&logo=windows&logoColor=white)](#%EF%B8%8F-usage)
 ```
 
-### Mode Badge
+### Theme Badge (GUI variant)
 
 ```markdown
-![Mode](https://img.shields.io/badge/Mode-CLI-lightgrey.svg)
+[![Theme](https://img.shields.io/badge/Theme-Light%20%2F%20Dark-8B5CF6?style=for-the-badge)](#%EF%B8%8F-usage)
 ```
+
+### Mode Badge (CLI variant)
+
+```markdown
+[![Mode](https://img.shields.io/badge/Mode-CLI-334155?style=for-the-badge)](#-usage)
+```
+
+> Keep the `img.shields.io/badge/...` substrings intact (`License-MIT`, `PowerShell-5.1%2B`, `Platform-Windows%2010%2F11`) — the fidelity and compliance gates grep for them.
 
 ---
 

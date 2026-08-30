@@ -1,4 +1,4 @@
-<#
+﻿<#
 .TITLE
     Test-ToolCompliance
 
@@ -38,15 +38,19 @@
     AI Generated
 
 .VERSION
-    1.1.0
+    1.2.0
 
 .CHANGELOG
+    1.2.0 (2026-08-30)
+    - Pitfall 30 gate: FAIL any local Write-Log/Add-LogLine/Write-RemediationLog/
+      Write-Toast declaring [Parameter(Mandatory = $true)] [string]$Message -
+      the empty-spacer crash class (Lesson 2026-08-30 Find-IntunePolicyConflict).
     1.1.0 (2026-08-22)
     - Initial release covering ICON LAW, Identity Lock names, logging guards,
     README contract, and Intune pair headers.
 
 .LASTUPDATE
-    2026-08-22
+    2026-08-30
 
 .EXAMPLE
     .\Test-ToolCompliance.ps1 -ToolPath C:\Pairs\detect-bitlocker.ps1, C:\Pairs\remediate-bitlocker.ps1
@@ -318,7 +322,7 @@ foreach ($toolFile in $ToolPath) {
         }
     }
 
-    # ---------------------------------------------------------------
+# ---------------------------------------------------------------
     # Report path law (scripts that write reports)
     # ---------------------------------------------------------------
 
@@ -327,6 +331,26 @@ foreach ($toolFile in $ToolPath) {
             Write-Check -Status 'PASS' -Name 'Report path anchored to script location (Law 12)'
         } else {
             Write-Check -Status 'FAIL' -Name 'Report path anchored to script location (Law 12)' -Detail 'Reports folder used but no $PSScriptRoot/$PSCommandPath fallback found'
+        }
+    }
+
+    # ---------------------------------------------------------------
+    # Mandatory + empty Message crash (Pitfall 30 / Lesson 2026-08-30)
+    # Any local Write-Log / Add-LogLine / Write-RemediationLog / Write-Toast
+    # that declares [Parameter(Mandatory = $true)] [string]$Message will crash
+    # the first time it is called with -Message "" as a visual spacer.
+    # ---------------------------------------------------------------
+
+    $logFuncs = @('Write-Log','Add-LogLine','Write-RemediationLog','Write-Toast')
+    foreach ($fn in $logFuncs) {
+        # Match: "function Write-Log { ... [Parameter(Mandatory = $true)] ... [string]$Message"
+        # Multiline + non-greedy confines it to the first function body.
+        # Single-quoted regex avoids PS variable expansion of $true / $fn / $Message.
+        $mandatoryCrashPattern = '(?ms)^\s*function\s+' + $fn + '\s*\{[^{}]*?\[Parameter\s*\(\s*Mandatory\s*=\s*\$true\s*\)\s*\]\s*\[string\s*\]\s*\$Message\b'
+        if ($content -match $mandatoryCrashPattern) {
+            Write-Check -Status 'FAIL' -Name "$fn allows empty Message (Pitfall 30)" -Detail '[Parameter(Mandatory = $true)] [string]$Message crashes on -Message "" spacer - declare AllowEmptyString + early-return guard'
+        } else {
+            Write-Check -Status 'PASS' -Name "$fn allows empty Message (Pitfall 30)"
         }
     }
 }

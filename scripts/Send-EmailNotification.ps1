@@ -24,7 +24,7 @@
     User UPN to send "from" via /users/{id}/sendMail. REQUIRED in Azure Automation
     runbooks - $env:USERNAME resolves to the worker account (e.g., OASTokenSrv01)
     and Invoke-MgGraphRequest will fail with ResourceNotFound. Use a real mailbox UPN
-    such as 'ops-notifications@contoso.com'. Optional on interactive sessions where
+    such as 'ops-notifications@contoso.com'. Optional on interactive sessions when
     $env:USERNAME is the operator's UPN.
 
 .TAGS

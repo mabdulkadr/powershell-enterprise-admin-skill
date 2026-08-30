@@ -19,11 +19,11 @@ Build production-grade PowerShell tools with modular architecture, Tailwind Slat
 6. [The 21 Canonical Patterns](#the-21-canonical-patterns-memorize-these)
 7. [The Design System — Tailwind Slate Tokens](#the-design-system-tailwind-slate)
 8. [The 19 Required XAML Styles](#the-19-required-xaml-styles)
-9. [The Log Levels & UI Colors](#the-log-levels-exact-colors)
+9. [The Log Levels (Exact Colors)](#the-log-levels-exact-colors)
 10. [Intune & Graph API Best Practices](#intune-best-practices)
 11. [Writing Professional README.md Files](#writing-professional-readmemd-files)
 12. [Verification Checklist (Run Before Returning)](#verification-checklist-before-first-run)
-13. [Reference Library Directory](#reference-files-read-in-this-order)
+13. [Reference Files (Read in This Order)](#reference-files-read-in-this-order)
 
 ---
 
@@ -206,7 +206,7 @@ Every tool needs the same primitives. Read the pattern reference for the exact i
 | **R. Async External Process Wrapper** | Non-blocking CLI tool wrapper with polling | `references/patterns.md` |
 | **S. Live Message Center Console** | Color-coded in-app RichTextBox log terminal | `references/patterns.md` |
 | **T. Native Windows Toast** | Action Center notifications via WinRT XML without extra modules | `references/patterns.md` |
-| **U. Responsive HTML Executive Report** | Self-contained executive HTML dashboard with instant search | `references/patterns.md` |
+| **U. Responsive HTML Executive Report (Carbon Dark)** | Self-contained executive HTML dashboard with instant search; IBM Carbon Design System dark theme is the **only** approved design system for HTML output | `templates/EnterpriseHtmlReport.template.ps1` (canonical helpers: `Get-StandardHtmlHead/Open/Footer/Close/ChartScripts` + `Export-StandardHtmlReport`) |
 
 ---
 
@@ -276,6 +276,103 @@ Add-LogLine -Message "Text" -Level 'INFO'
 
 `Add-LogLine` adds to the log, writes to the file log, updates the status bar, and emits to console — in that order. The consecutive-duplicate guard (`$script:lastLogKey`) drops immediate duplicate lines so repeated operations don't flood the log. Canonical implementations: `scripts/Add-LogLine.ps1` (GUI) and `scripts/Write-Log.ps1` (CLI). Never invent a third logging function. The colors above are fixed and identical in console output and the GUI Message Center RichTextBox.
 
+### Empty-Message Spacer Rule (Pitfall 30 — mandatory)
+
+`Write-Log -Message ""` and `Add-LogLine -Message ""` are commonly used as **visual spacers** to break sections vertically. PowerShell's `[Parameter(Mandatory = $true)]` treats an empty string as a missing value, so a Mandatory `Message` parameter crashes the FIRST spacer line before any real content reaches the log (Lesson 2026-08-30 | Find-IntunePolicyConflict).
+
+Every logging helper MUST therefore declare:
+
+```powershell
+[Parameter(Mandatory = $false)]
+[AllowEmptyString()]
+[string]$Message = "",
+...
+if ([string]::IsNullOrEmpty($Message)) { return }
+```
+
+`Finish-Script -Message` stays Mandatory (it is a true summary line, never a spacer). This is enforced by `Test-ToolCompliance.ps1` (Pitfall 30 gate) — any local `Write-Log`/`Add-LogLine`/`Write-RemediationLog`/`Write-Toast` with `Mandatory = $true` on `Message` fails the gate before delivery.
+
+---
+
+## The HTML Design System — IBM Carbon Dark (Canonical for All HTML Output)
+
+**Every HTML report produced by any tool in this skill MUST use the IBM Carbon Design System (Dark theme).** WPF GUI tools use Tailwind Slate (see above); HTML output uses Carbon Dark. Two surfaces, two design systems, no overlap.
+
+### Why Carbon Dark for HTML
+
+- **Operator-deliverable reports** are emailed, archived, and printed; Carbon is the IBM enterprise standard for executive dashboards and reads identically on every browser and printed page.
+- The reference design (`Intune-Reporting-Tools/Export-IntuneDashboard/IntuneDashboard_*.html`) is the production-proven shape — KPI tiles, donut/bar charts, structured tables, footer with run metadata, disclaimer modal.
+- It is self-contained: a `<style>` block with IBM Plex Sans/Mono + Carbon tokens, plus optional inline SVG and vanilla JS. No CDN runtime dependency that can fail offline.
+
+### Canonical Tokens (Copy, Never Invent)
+
+| Token | Value | Use |
+|-------|-------|-----|
+| `--cds-background` | `#161616` | Page background |
+| `--cds-layer-01` | `#262626` | Card / row background |
+| `--cds-layer-02` | `#353535` | Hover / inner panel |
+| `--cds-border-strong-01` | `#4d4d4d` | Header divider |
+| `--cds-border-subtle-01` | `#393939` | Row divider, KPI grid separator |
+| `--cds-text-primary` | `#f4f4f4` | Headings, values |
+| `--cds-text-secondary` | `#c6c6c6` | Body text, table cells |
+| `--cds-text-helper` | `#8d8d8d` | Captions, footer |
+| `--cds-blue` | `#0f62fe` | Primary accent (links, card borders) |
+| `--cds-support-success` | `#24a148` | Compliant / healthy |
+| `--cds-support-warning` | `#f1c21b` | At risk / degraded |
+| `--cds-support-error` | `#da1e28` | Critical / failed |
+| `--cds-support-info` | `#0043ce` | Informational |
+| `--cds-purple` | `#8a3ffc` | Secondary accent |
+| `--cds-magenta` | `#d02670` | Tertiary accent |
+
+**Never write hex codes inline** when a token exists. Print styles are part of the template — `@media print` inverts to white background automatically.
+
+### Canonical Helpers (Five Functions, One Source of Truth)
+
+The complete HTML rendering toolkit lives at **`templates/EnterpriseHtmlReport.template.ps1`** (canonical, copy VERBATIM into every script that emits HTML — or dot-source it). The five reserved function names:
+
+| Function | Returns | Purpose |
+|----------|---------|---------|
+| `Get-StandardHtmlHead` | `<!DOCTYPE html>...<style>...</style></head>` | Head + Carbon stylesheet. Parameters: `-Title`, `-Subtitle`. |
+| `Get-StandardHtmlOpen` | `<body><header> + KPI row` | Page header + KPI tiles. Parameters: `-Title`, `-Subtitle`, `-GeneratedAt`, `-Operator`, `-Kpis` (`@(@{value=…; label=…; color=…})`). |
+| `Get-StandardHtmlFooter` | `</body>-end footer (3-col) + disclaimer modal` | Run metadata (tenant, operator, UTC, run-id, version, grade). Parameters: `-Tenant`, `-Operator`, `-Grade`, `-GradeRate`, `-GradeColor`, `-GradeTip`, `-ReportName`, `-Version`. |
+| `Get-StandardHtmlClose` | `</body></html>` + JS helpers | Closes document; adds instant-search + dark-print support. |
+| `Get-StandardHtmlChartScripts` | Optional `<script>` block | Canvas donut + flat bar charts (use only when emitting chart data). |
+
+A sixth convenience helper, **`Export-StandardHtmlReport`**, wraps the four above into a single call:
+
+```powershell
+Export-StandardHtmlReport -OutputPath $path -Title "Compliance" -Subtitle "Tenant: contoso" `
+    -Tenant $tenant -Operator $upn -Kpis $kpis -Body $bodyHtml `
+    -Grade 'A' -GradeRate '97%' -GradeColor '#24a148' -GradeTip 'A >= 95% (Excellent)' `
+    -Version '1.0.0' -ReportName 'Compliance Report' -ChartScripts $chartJs
+```
+
+### Body Layout (between Open and Footer)
+
+Build the body with these sanctioned HTML patterns — never invent ad-hoc CSS:
+
+```html
+<div class="section-title">📊 Compliance Breakdown</div>
+<div class="grid-2">
+    <div class="card">
+        <h2>By State</h2>
+        <table><thead><tr><th>State</th><th>Count</th></tr></thead><tbody>
+            <tr><td>Compliant</td><td>123</td></tr>
+        </tbody></table>
+    </div>
+    <div class="card">
+        <h2>By Platform</h2>
+        <canvas id="chart-platform"></canvas>
+    </div>
+</div>
+```
+
+Sanctioned classes: `.section-title`, `.grid-2`, `.card`, `.kpi-row`, `.kpi-card`, `.bar-chart`, `.legend`, `.badge.critical|high|medium|low`, `.progress-bar`, `.footer`, `.disclaimer-box`. Need a new pattern? Extend by copying the closest existing class — never invent a new one.
+
+### Migration Rule (Identity Lock)
+
+If a script already emits HTML and uses a different design, **migrate it to Carbon** using the canonical helpers — do not maintain parallel design systems. The audit found 10 HTML-emitting scripts; 9 already use Carbon via `Get-StandardHtml*`, one outlier (`Export-IntuneDashboard.ps1`) still has bespoke HTML and is the canonical migration target.
+
 ---
 
 ## The Required XAML Structure
@@ -304,6 +401,100 @@ Window (WindowStyle="SingleBorderWindow", ResizeMode="CanResizeWithGrip")
 - Sidebar bottom = consistent "About + Logs" footer
 - StatusBar bottom = always-visible status, time, and progress
 - Pages pattern = multi-feature tools without navigation tabs cluttering the chrome
+
+---
+
+## CLI Progress — `Write-Progress` for Long-Running Operations
+
+Every CLI script that loops over more than ~25 items, paginates Graph results, or performs batched remote operations MUST emit `Write-Progress` so the operator sees real status in the console. The audit found roughly half the reporting scripts do this; the rest need it.
+
+### When to Use
+
+| Operation | Use Write-Progress? |
+|-----------|---------------------|
+| Single Graph call returning one page | No (too brief) |
+| `Get-MgGraphAllPages` over >50 items | **Yes** — one update per page |
+| `foreach ($device in $devices)` with per-item Graph calls | **Yes** — one update per device |
+| Batched remediation / wipe / sync actions | **Yes** — one update per target |
+| Proactive Remediation detect/remediate (returns in <5s) | No |
+| Quick CSV export of in-memory data | No |
+
+### Canonical Pattern (Copy VERBATIM)
+
+```powershell
+$processedCount = 0
+$total = @($items).Count
+
+foreach ($item in $items) {
+    $processedCount++
+    # Activity = persistent label; Status = current item; PercentComplete = 0..100
+    Write-Progress -Activity 'Collecting managed devices' `
+        -Status "Device $processedCount of $total : $($item.deviceName)" `
+        -PercentComplete (($processedCount / [Math]::Max($total, 1)) * 100)
+
+    # ... per-item work ...
+}
+
+# Always close the progress bar when the loop exits (success OR failure)
+try { } finally { Write-Progress -Activity 'Collecting managed devices' -Completed }
+```
+
+### Three Rules (Identity Lock)
+
+1. **One `Activity` label per logical phase.** Do not change the activity string mid-loop — that resets the bar. New phase → new activity string.
+2. **Always call `-Completed` in a `finally` block.** Skipping it leaves the progress bar hanging in the console for 30+ seconds after the script ends.
+3. **`[Math]::Max($total, 1)` guards the divide-by-zero** when the collection is empty (otherwise the bar shows `NaN%`).
+
+### Pair With `Write-Log`
+
+`Write-Progress` is for the console bar; `Write-Log` is for the file log. They are complementary, not interchangeable:
+
+```powershell
+Write-Progress -Activity 'Auditing policies' -Status "Policy $i of $total" -PercentComplete (...)
+Write-Log -Message "Auditing policy '$($p.displayName)' ($i/$total)" -Level 'DEBUG'
+```
+
+Progress is high-frequency (once per item) and verbose; logging is summary-grade. Mixing them floods the log file.
+
+---
+
+## Output Placement — Reports Beside the Script
+
+Every script that produces output files (HTML, CSV, JSON, MD, ZIP) MUST place them in a folder beside the script:
+
+- **Reports** (HTML/CSV/JSON/MD): `<script-folder>\Reports\`
+- **Logs**: `<script-folder>\Logs\` **only** when the script actually emits logs (most CLI scripts do — WPF GUI scripts use `%LOCALAPPDATA%\<Tool>\Logs\` instead)
+
+The reason: dot-sourcing a script (`'. .\script.ps1'`) leaves `$PSScriptRoot=''` and `Join-Path '' 'Reports'` crashes with `ParameterBindingValidationException`. Anchoring beside the script guarantees the report lands where the operator expects it, regardless of the caller's working directory.
+
+### Canonical Pattern (Law 12)
+
+```powershell
+$scriptDirectory = if ($PSScriptRoot) { $PSScriptRoot }
+elseif ($PSCommandPath) { Split-Path -Parent $PSCommandPath }
+elseif ($MyInvocation.MyCommand.Path) { Split-Path -Parent $MyInvocation.MyCommand.Path }
+else { (Get-Location).Path }
+
+# If user passed a relative OutputPath, anchor it beside the script
+if ($PSBoundParameters.ContainsKey('OutputPath') -and $OutputPath -and
+    -not [System.IO.Path]::IsPathRooted($OutputPath)) {
+    $OutputPath = Join-Path $scriptDirectory $OutputPath
+}
+
+# If user passed no OutputPath, default to <script>\Reports\
+if (-not $PSBoundParameters.ContainsKey('OutputPath')) {
+    $OutputPath = Join-Path $scriptDirectory 'Reports'
+}
+
+# Always create the folder if missing (never let Export-Csv fail on a missing dir)
+if (-not (Test-Path -LiteralPath $OutputPath)) {
+    $null = [System.IO.Directory]::CreateDirectory($OutputPath)
+}
+```
+
+### Don't Create `Logs\` Unless You Log
+
+If the script uses `Initialize-Log`, that helper creates its own folder (currently `%ProgramData%\<Tool>\Logs\` for the General type and `<SystemDrive>\IntuneLogs\<Tool>\` for the Intune type). Do **not** add an extra `Logs\` folder beside the script just for symmetry — let the logging helper own that decision. Only add a beside-script `Logs\` when the script writes plain-text log files outside of `Initialize-Log`.
 
 ---
 
@@ -440,7 +631,8 @@ The complete production-tested pattern set lives in `references/intune-patterns.
 - [ ] GUI: `$script:lastLogKey` guard present; StatusBar uses `StatusBarText`
 - [ ] Smoke-tested with Windows PowerShell 5.1 (`powershell.exe -File tool.ps1 -WhatIf`) - pwsh-only success is NOT proof; standalone `[HelpMessage()]` parses on pwsh 7 but crashes 5.1 (`scripts/Test-Delivery.ps1 -SmokeTest` automates this)
 - [ ] README has shields.io badges + Disclaimer section
-- [ ] README carries `## License` / `## Disclaimer` sections - a short emoji prefix is allowed (`## 📜 License`, `## ⚠ Disclaimer`); the gate regex tolerates up to 4 symbol characters between `##` and the keyword
+- [ ] README carries ## License / ## Disclaimer sections - a short emoji prefix is allowed (## 📜 License, ## ⚠ Disclaimer); the gate regex tolerates up to 4 symbol characters between ## and the keyword
+- [ ] README structurally matches its variant template (scripts/Test-ReadmeFidelity.ps1 -ReadmePath README.md -Variant gui|cli|intune|basic -> zero FAIL; catches wrong section order, leaked meta-instruction lines, unfilled placeholders, missing footer signature)
 
 For the **full PS 5.1 pitfalls list** (Thumb.CornerRadius, Join-Path, Pester 3.4, ampersand crashes, etc.), see `references/pitfalls.md`.
 
@@ -470,10 +662,15 @@ A multi-tool "suite" README documents each script's own scope — an Intune Depl
 These elements are non-negotiable in every variant — models writing from scratch reliably skip them:
 
 ```markdown
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![PowerShell](https://img.shields.io/badge/powershell-5.1%2B-blue.svg)
-![Platform](https://img.shields.io/badge/Windows-10%2F11-blue.svg)
+[![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-5391FE?style=for-the-badge&logo=powershell&logoColor=white)](https://learn.microsoft.com/en-us/powershell/)
+[![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-0F172A?style=for-the-badge)](#%EF%B8%8F-requirements)
+[![License](https://img.shields.io/badge/License-MIT-F59E0B?style=for-the-badge)](#-license)
+[![Version](https://img.shields.io/badge/Version-1.0.0-334155?style=for-the-badge)](#-overview)
+
+[Overview](#-overview) • [Features](#-core-features) • [Usage](#-usage) • [Requirements](#%EF%B8%8F-requirements) • [License](#-license)
 ```
+
+Badges are always **linked** (`[![Alt](shield-url)](anchor)`) in `style=for-the-badge` with the Slate palette, sit **inside the hero div**, number **at least five** (core PowerShell / Platform / License + Version + variant badge), and are followed by a bullet-separated quick-nav row — exactly like this skill's own README header. Flat unlinked badges (`![Alt](url)`) fail review.
 
 ```markdown
 ## Disclaimer
@@ -488,9 +685,9 @@ This wording is canonical — copy it verbatim; do not paraphrase or shorten it.
 
 A README without shields.io badges or a Disclaimer section fails review even when everything else is perfect.
 
-**Key principles:** shields.io badges (`License`, `PowerShell 5.1+`, `Platform`, `Intune` if pair), emojis for scan, tables for exit codes/settings, ` ```powershell` + ` ```text` language tags, `---` between sections.
+**Key principles:** shields.io badges in linked `for-the-badge` style (`License`, `PowerShell 5.1+`, `Platform`, `Intune` if pair, plus `Version` and the variant badge — minimum five inside the hero) + quick-nav row, emojis for scan, tables for exit codes/settings, ` ```powershell` + ` ```text` language tags, `---` between sections.
 
-**Visual Identity — Centered Hero Header, Fixed Body:** Every README opens with a **centered hero header** (`<div align="center">` wrapping the title, bold tagline, optional one-line description, and the shields.io badges — see `references/readme-template.md` → *Canonical Header*). The header emoji (`# <emoji> Title`) is **variable per project/script name** (e.g., 🏢 AD, 📊 Report, 🛡️ Intune, 🪟 Windows, 🖥️ GUI, ☁️ M365 — see `references/readme-template.md` Icon Policy mapping). All other section icons are **fixed** as the skill's unified signature: `📖 Overview, ✨ Features, 📂 Structure, 🚀 Usage, ⚙️ Requirements/Parameters, 🧰 Core Commands, 🔍 Troubleshooting, ❓ FAQ, 🛡 Operational Notes, 📜 License, 👤 Author, ⚠ Disclaimer` + footer `⭐` + signature line `Built with [**PowerShell Enterprise Admin**](https://github.com/mabdulkadr/powershell-enterprise-admin-skill)` (plain linked line inside the footer's center div — no blockquote). This fixed set + shields.io badges makes any README instantly recognizable as this skill's work.
+**Visual Identity — Centered Hero Header, Fixed Body:** Every README opens with a **centered hero header** identical in shape to this skill's own `README.md`: `<div align="center">` wrapping the title, the two FIXED description lines (`**[Brief Description]**` bold tagline + `[One sentence explaining what the script does and for whom.]`), linked `for-the-badge` shields.io badges, and a bullet-separated quick-nav row (see `references/readme-template.md` → *Canonical Header*). Every README also ends with the skill's **signature footer** center div (`⭐` star line, links row, Buy Me A Coffee badge, signature line). The header emoji (`# <emoji> Title`) is **variable per project/script name** (e.g., 🏢 AD, 📊 Report, 🛡️ Intune, 🪟 Windows, 🖥️ GUI, ☁️ M365 — see `references/readme-template.md` Icon Policy mapping). All other section icons are **fixed** as the skill's unified signature: `📖 Overview, ✨ Features, 📂 Structure, 🚀 Usage, ⚙️ Requirements/Parameters, 🧰 Core Commands, 🔍 Troubleshooting, ❓ FAQ, 🛡 Operational Notes, 📜 License, 👤 Author, ⚠ Disclaimer` + footer `⭐` + signature line `Built with [**PowerShell Enterprise Admin**](https://github.com/mabdulkadr/powershell-enterprise-admin-skill)` (plain linked line inside the footer's center div — no blockquote). This fixed set + shields.io badges makes any README instantly recognizable as this skill's work.
 
 Full templates + badge reference + section examples → `references/readme-template.md` (canonical). Also see `references/_header-canonical.md` for header consistency.
 
@@ -532,7 +729,7 @@ This skill learns from its own mistakes. The **Lessons Learned Register** lives 
 
 Then:
 
-4. **`scripts/`** — Canonical implementations, copy verbatim: `Add-LogLine.ps1` (GUI), `Write-Log.ps1` (CLI + `Initialize-Log`/`Finish-Script`), `Guard-Action.ps1` (Pattern H), `Get-MgGraphAllPages.ps1`, `Invoke-GraphRequestWithRetry.ps1`, `Invoke-GraphBatchRequest.ps1`, `Get-Graph403Message.ps1`, `ConvertTo-SafeDateTime.ps1`, `Connect-GraphAuth.ps1`, `Test-XamlFile.ps1`, `Test-Skill.ps1` (skill self-test), `Test-Delivery.ps1` (one-shot delivery verifier: parser + compliance + PS 5.1 smoke test), plus Enterprise patterns-style `Embed-Xaml.ps1` for embedded XAML build step
+4. **`scripts/`** — Canonical implementations, copy verbatim: `Add-LogLine.ps1` (GUI), `Write-Log.ps1` (CLI + `Initialize-Log`/`Finish-Script`), `Guard-Action.ps1` (Pattern H), `Get-MgGraphAllPages.ps1`, `Invoke-GraphRequestWithRetry.ps1`, `Invoke-GraphBatchRequest.ps1`, `Get-Graph403Message.ps1`, `ConvertTo-SafeDateTime.ps1`, `Connect-GraphAuth.ps1`, `Test-XamlFile.ps1`, `Test-Skill.ps1` (skill self-test), `Test-Delivery.ps1` (one-shot delivery verifier: parser + compliance + README fidelity + PS 5.1 smoke test), `Test-ReadmeFidelity.ps1` (README vs variant-template structural gate: heading order, hero badges, placeholders, leaked instructions, Disclaimer, footer), plus Enterprise patterns-style `Embed-Xaml.ps1` for embedded XAML build step
 5. **`references/file-architecture.md`** — Tier 1/2/3 folder structures + complete Tier 1 bootstrap code + **Enterprise patterns Tier 3 reference (embedded XAML, console-hide, AppConstants)**
 6. **`references/design-tokens.md`** — Complete Tailwind Slate color tokens + light/dark overrides + spacing + typography (canonical for `SKILL.md` Design System)
 7. **`references/xaml-styles.md`** — Full XAML for every required style (BtnBase hierarchy, Card, StatCard, InputBox, NavBtnBase, StyledCheckBox, StyledComboBox, LiveMessageCenterBox, SessionCard)
@@ -594,3 +791,4 @@ Presentation principles (precise summaries, pattern references, honest trade-off
 6. **One `Add_Closing` handler per tool** — never two
 7. **Test XAML with `XamlReader.Parse()`** — catches Ampersand Law violations and StaticResource Law violations before ShowDialog
 8. **Intune scripts follow enterprise standards** — structured headers, module checks, Graph pagination, paired remediation scripts
+
