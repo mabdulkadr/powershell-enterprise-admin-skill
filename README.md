@@ -10,9 +10,9 @@ One standard. Every tool looks, runs, and logs the same way — production-grade
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11%20-0F172A?style=for-the-badge)](#-works-on)
 [![UI](https://img.shields.io/badge/UI-WPF%20Tailwind%20Slate-3B82F6?style=for-the-badge&logo=windows&logoColor=white)](#-design-system)
 [![Theme](https://img.shields.io/badge/Theme-Light%20%2F%20Dark-8B5CF6?style=for-the-badge)](#-design-system)
-[![Evals](https://img.shields.io/badge/Evals-25%20Scenarios-10B981?style=for-the-badge)](#-test-everything)
+[![Evals](https://img.shields.io/badge/Evals-40%20Scenarios-10B981?style=for-the-badge)](#-test-everything)
 [![License](https://img.shields.io/badge/License-MIT-F59E0B?style=for-the-badge)](#-license)
-[![Version](https://img.shields.io/badge/Version-1.2-334155?style=for-the-badge)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-1.5.0-334155?style=for-the-badge)](CHANGELOG.md)
 
 [How It Works](#-how-it-works) • [Quick Start](#-quick-start) • [12 Laws](#-the-12-laws) • [Design System](#-design-system) • [Examples & Use Cases](#-examples--use-cases--real-prompts-real-tools) • [FAQ](#-faq)
 
