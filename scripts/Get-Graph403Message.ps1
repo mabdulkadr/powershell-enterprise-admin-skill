@@ -1,4 +1,4 @@
-﻿<#
+<#
 .TITLE
     Get-Graph403Message
 
@@ -8,12 +8,6 @@
 .DESCRIPTION
     Converts bare HTTP 403 Forbidden errors into actionable administrative guidance,
     specifying required roles and permissions per service (Entra ID, Intune, Autopilot, Defender, Exchange, Teams).
-
-.PARAMETER Details
-    Optional detailed exception message or sub-code for extra context.
-
-.PARAMETER Service
-    Target service name ('EntraID', 'Intune', 'Autopilot', 'Defender', 'Exchange', 'Teams', 'SharePoint').
 
 .TAGS
     Graph,ErrorHandling,RBAC
@@ -38,8 +32,17 @@
 .LASTUPDATE
     2026-08-20
 
+.PARAMETER Details
+    Optional detailed exception message or sub-code for extra context.
+
+.PARAMETER Service
+    Target service name ('EntraID', 'Intune', 'Autopilot', 'Defender', 'Exchange', 'Teams', 'SharePoint').
+
 .EXAMPLE
     Get-Graph403Message -Service 'Intune'
+.NOTES
+    - Returns actionable 403 message per ValidateSet 7-service list in _graph-canonical.md.
+
 #>
 
 #Requires -Version 5.1

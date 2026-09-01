@@ -1,4 +1,4 @@
-﻿<#
+<#
 .TITLE
     Connect-GraphAuth
 
@@ -9,24 +9,6 @@
     The single source of truth for every Graph authentication mode in Intune and enterprise scripts.
     Supports Managed Identity, Interactive login, Device Code Flow (for RDP/bastion hosts),
     Client Credentials (App Registration), Certificate auth, and config persistence in LocalAppData.
-
-.PARAMETER TenantId
-    Directory (Tenant) ID for unattended app registration authentication.
-
-.PARAMETER ClientSecret
-    Client secret for app registration authentication.
-
-.PARAMETER CertificateThumbprint
-    Certificate thumbprint in Cert:\CurrentUser\My or Cert:\LocalMachine\My for certificate authentication.
-
-.PARAMETER Mode
-    Authentication mode ('Auto', 'ManagedIdentity', 'Interactive', 'DeviceCode', 'ClientCredentials', 'Certificate'). Default is 'Auto'.
-
-.PARAMETER Scopes
-    Array of required Graph permission scopes for interactive/device code authentication.
-
-.PARAMETER ClientId
-    Application (Client) ID for unattended app registration authentication.
 
 .TAGS
     Graph,Authentication
@@ -51,8 +33,29 @@
 .LASTUPDATE
     2026-08-20
 
+.PARAMETER TenantId
+    Directory (Tenant) ID for unattended app registration authentication.
+
+.PARAMETER ClientSecret
+    Client secret for app registration authentication.
+
+.PARAMETER CertificateThumbprint
+    Certificate thumbprint in Cert:\CurrentUser\My or Cert:\LocalMachine\My for certificate authentication.
+
+.PARAMETER Mode
+    Authentication mode ('Auto', 'ManagedIdentity', 'Interactive', 'DeviceCode', 'ClientCredentials', 'Certificate'). Default is 'Auto'.
+
+.PARAMETER Scopes
+    Array of required Graph permission scopes for interactive/device code authentication.
+
+.PARAMETER ClientId
+    Application (Client) ID for unattended app registration authentication.
+
 .EXAMPLE
     Connect-GraphAuth -Mode DeviceCode -Scopes @('DeviceManagementManagedDevices.ReadWrite.All')
+.NOTES
+    - Supports Auto/ManagedIdentity/Interactive/DeviceCode/ClientCredentials/Certificate per _graph-canonical.md.
+
 #>
 
 #Requires -Version 5.1
@@ -177,7 +180,7 @@ function Disconnect-GraphAuth {
             Write-Verbose 'Disconnected from Microsoft Graph.'
         }
     }
-    catch {
-        # Silent cleanup
+    catch [System.Exception] {
+        Write-Verbose "Disconnect-GraphAuth cleanup: $($_.Exception.Message)"
     }
 }

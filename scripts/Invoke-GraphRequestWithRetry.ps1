@@ -1,4 +1,4 @@
-﻿<#
+<#
 .TITLE
     Invoke-GraphRequestWithRetry
 
@@ -9,6 +9,29 @@
     The single source of truth for resilient Graph API calls in enterprise PowerShell tools.
     Handles transient network errors, HTTP 429 throttling (with exponential or Retry-After backoff),
     HTTP 5xx server errors, and maps HTTP 403 errors to actionable missing-role guidance.
+
+.TAGS
+    Graph,Resilience,Retry
+
+.PLATFORM
+    Windows
+
+.PERMISSIONS
+    None (local execution)
+
+.AUTHOR
+    AI Generated
+
+.VERSION
+    1.1.0
+
+.CHANGELOG
+    1.1.0 (2026-08-20)
+    - Canonical rich header upgrade to Enterprise Standards field order
+    1.0.0 - Initial release
+
+.LASTUPDATE
+    2026-08-20
 
 .PARAMETER MaxRetries
     Maximum retry attempts for transient errors (429, 5xx). Default is 3.
@@ -34,31 +57,11 @@
 .PARAMETER Body
     Request body payload.
 
-.TAGS
-    Graph,Resilience,Retry
-
-.PLATFORM
-    Windows
-
-.PERMISSIONS
-    None (local execution)
-
-.AUTHOR
-    AI Generated
-
-.VERSION
-    1.1.0
-
-.CHANGELOG
-    1.1.0 (2026-08-20)
-    - Canonical rich header upgrade to Enterprise Standards field order
-    1.0.0 - Initial release
-
-.LASTUPDATE
-    2026-08-20
-
 .EXAMPLE
     Invoke-GraphRequestWithRetry -Uri 'https://graph.microsoft.com/v1.0/devices' -Service 'EntraID'
+.NOTES
+    - Retry helper — exponential backoff capped at 60s per _graph-canonical.md.
+
 #>
 
 #Requires -Version 5.1
@@ -122,8 +125,14 @@ function Invoke-GraphRequestWithRetry {
                 }
                 # Honor Retry-After header for 429, else exponential backoff
                 $retryAfter = $null
-                try { $retryAfter = $_.Exception.Response.Headers['Retry-After'] } catch {}
-                if (-not $retryAfter) { try { $retryAfter = $_.Exception.Response.Headers['retry-after'] } catch {} }
+                try {
+                    if ($_.Exception.Response -and $_.Exception.Response.Headers) {
+                        $retryAfter = $_.Exception.Response.Headers['Retry-After']
+                        if (-not $retryAfter) { $retryAfter = $_.Exception.Response.Headers['retry-after'] }
+                    }
+                } catch [System.Exception] {
+                    $retryAfter = $null
+                }
                 $delay = if ($retryAfter -and [int]::TryParse($retryAfter.ToString().Split(',')[0], [ref]$null)) { [int]$retryAfter.ToString().Split(',')[0] } else { if ($status -eq 429) { [Math]::Min(60, $BaseDelaySeconds * [Math]::Pow(2, $attempt - 1)) } else { $BaseDelaySeconds * [Math]::Pow(2, $attempt - 1) } }
                 Write-Warning "Graph request throttled or transient error (HTTP $status), retrying in $delay seconds (attempt $attempt/$MaxRetries)..."
                 Start-Sleep -Seconds $delay

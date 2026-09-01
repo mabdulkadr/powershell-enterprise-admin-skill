@@ -1,4 +1,4 @@
-﻿<#
+<#
 .TITLE
     ConvertTo-SafeDateTime
 
@@ -8,12 +8,6 @@
 .DESCRIPTION
     Parses dates from CSV exports, Windows Event logs, and Microsoft Graph API responses
     across cultures without throwing exceptions. Tries standard ISO-8601, round-trip, and regional formats.
-
-.PARAMETER Formats
-    Array of custom format strings to attempt before falling back.
-
-.PARAMETER Value
-    The date string to parse.
 
 .TAGS
     Dates,CultureSafe,Parsing
@@ -38,8 +32,17 @@
 .LASTUPDATE
     2026-08-20
 
+.PARAMETER Formats
+    Array of custom format strings to attempt before falling back.
+
+.PARAMETER Value
+    The date string to parse.
+
 .EXAMPLE
     ConvertTo-SafeDateTime -Value '2026-08-20T10:56:00.1234567Z'
+.NOTES
+    - Culture-safe date conversion; handles en-US vs non-US locales.
+
 #>
 
 #Requires -Version 5.1

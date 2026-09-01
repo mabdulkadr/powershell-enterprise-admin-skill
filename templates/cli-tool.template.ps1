@@ -145,11 +145,11 @@ try {
     $isElevated = Test-IsElevated
     Write-Log -Message "Elevated: $isElevated" -Level 'INFO'
 
-    # TODO: build target list; process each with Invoke-TargetAction; aggregate:
+    # TODO: build target list; process each with Invoke-TargetAction:
+    #   $targets = @('localhost')  # or the actual target set
     #   $results = @($targets | ForEach-Object { Invoke-TargetAction -TargetName $_ })
-    #   $ok  = @($results | Where-Object { $_.Success }).Count
-    #   $bad = @($results | Where-Object { -not $_.Success }).Count
-    #   Write-Log "Completed: $ok succeeded, $bad failed" $(if ($bad -gt 0) { 'WARNING' } else { 'SUCCESS' })
+    #   Write-Summary -Results $results
+    #   $failed = @($results | Where-Object { -not $_.Success }).Count
 
     Finish-Script -ExitCode 0 -Message "[ToolName] completed successfully" -Level 'SUCCESS'
 }

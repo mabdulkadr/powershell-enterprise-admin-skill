@@ -1,4 +1,9 @@
-﻿<div align="center">
+<!-- HEADING LEVELS FIDELITY CONTRACT:
+     Top-level sections (Overview, Core Features, Project Structure, Scripts Included,
+     Requirements, Intune Deployment, Typical Workflow, Operational Notes) = H1 (#)
+     Sub-sections (Detection Script, Remediation Script, Author, License, Disclaimer) = H2 (##)
+     Using H2 for top sections will trigger Test-ReadmeFidelity FAIL. -->
+<div align="center">
 
 # 🛡️ [Solution Name]
 

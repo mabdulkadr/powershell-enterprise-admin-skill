@@ -1,4 +1,4 @@
-﻿<#
+<#
 .TITLE
     Test-XamlFile
 
@@ -8,15 +8,6 @@
 .DESCRIPTION
     Validates WPF XAML files or here-strings using both XamlReader.Parse() (for syntax/XML/ampersand errors)
     and XmlNodeReader + XamlReader.Load() (for StaticResource key binding errors).
-
-.PARAMETER PassThru
-    If specified, returns detailed validation result hashtable instead of boolean.
-
-.PARAMETER Content
-    Raw XAML string to test (for in-memory Tier 1 here-strings).
-
-.PARAMETER Path
-    Path to the XAML file to test.
 
 .TAGS
     Validation,XAML,WPF
@@ -41,11 +32,23 @@
 .LASTUPDATE
     2026-08-20
 
+.PARAMETER PassThru
+    If specified, returns detailed validation result hashtable instead of boolean.
+
+.PARAMETER Content
+    Raw XAML string to test (for in-memory Tier 1 here-strings).
+
+.PARAMETER Path
+    Path to the XAML file to test.
+
 .EXAMPLE
     Test-XamlFile -Content $xaml
 
 .EXAMPLE
     Test-XamlFile -Path 'MainWindow.xaml'
+.NOTES
+    - XAML validator — tests both XamlReader.Parse and XmlNodeReader+Load per pitfalls.md.
+
 #>
 
 #Requires -Version 5.1

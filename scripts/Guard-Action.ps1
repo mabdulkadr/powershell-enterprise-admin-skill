@@ -1,4 +1,4 @@
-﻿<#
+<#
 .TITLE
     Guard-Action
 
@@ -9,9 +9,6 @@
     The single source of truth for the Guard-Action / Release-Action pattern pair.
     Prevents concurrent and re-entrant button click handlers from racing each other
     and corrupting UI/background state.
-
-.PARAMETER ActionName
-    Description of the action attempting to execute.
 
 .TAGS
     WPF,Concurrency,PatternH
@@ -39,6 +36,9 @@
 .LASTUPDATE
     2026-08-30
 
+.PARAMETER ActionName
+    Description of the action attempting to execute.
+
 .EXAMPLE
     if (-not (Guard-Action 'Export CSV')) { return }
     try {
@@ -46,6 +46,9 @@
     } finally {
     Release-Action
     }
+.NOTES
+    - Pattern H — dot-source from templates; never re-declare inline.
+
 #>
 
 #Requires -Version 5.1

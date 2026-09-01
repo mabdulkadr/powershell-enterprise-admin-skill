@@ -1,15 +1,15 @@
-﻿<#
+<#
 .TITLE
     Test-Skill - Canonical skill verification runner
 
 .SYNOPSIS
-    Validates the powershell-enterprise-admin skill itself: AST parse, header order, XAML checks, and style lints.
+    Validates the powershell-enterprise-admin skill itself: AST parse, header order, XAML checks, Get-Help smoke test, and style lints.
 
 .DESCRIPTION
-    Runs automated checks that previously required manual grep: AST parse for all scripts/*.ps1, header field order, #Requires placement, DynamicResource vs hardcoded hex, Add_Closing count, ValidateSet unification, and file:// leak. Designed to be run from skill root or any child directory.
+    Runs automated checks that previously required manual grep: AST parse for all scripts/*.ps1, header field order, #Requires placement, DynamicResource vs hardcoded hex, Add_Closing count, ValidateSet unification, file:// leak, Get-Help smoke test, TOC validation, and template integrity. Designed to be run from skill root or any child directory.
 
 .TAGS
-    Testing, Verification
+    Testing,Verification,SelfTest
 
 .PLATFORM
     Windows
@@ -21,16 +21,22 @@
     AI Generated
 
 .VERSION
-    1.0.1
+    1.2.0
 
 .CHANGELOG
+    1.2.0 (2026-09-01)
+    - Add Hardcoded Rules count check (>=28), Export-CarbonHtml absence check, and evals.json count check (>=28).
+    1.1.0 (2026-09-01)
+    - Add Get-Help smoke test across all canonical scripts in scripts/.
+    - Add SKILL.md TOC anchor validation check.
+    - Add README structure map verification check.
     1.0.1 (2026-08-22)
-    - Portable skill-root fallback: resolves any installed skill containing SKILL.md + scripts/Test-Skill.ps1; no hardcoded install path (rename-safe)
-    1.0 (2026-08-21)
-    - Initial release: replaces manual grep checks from README.md:296
+    - Portable skill-root fallback: resolves any installed skill containing SKILL.md + scripts/Test-Skill.ps1; no hardcoded install path (rename-safe).
+    1.0.0 (2026-08-21)
+    - Initial release: replaces manual grep checks from README.md:296.
 
 .LASTUPDATE
-    2026-08-22
+    2026-09-01
 
 .EXAMPLE
     .\scripts\Test-Skill.ps1 -Verbose
@@ -71,7 +77,6 @@ $scriptDir = if ($PSScriptRoot) { $PSScriptRoot } elseif ($PSCommandPath) { Spli
 $skillRoot = Split-Path -Parent $scriptDir
 if (-not (Test-Path -LiteralPath (Join-Path $skillRoot "SKILL.md"))) {
   # Portable fallback: try PWD, then any installed skill that ships this self-test.
-  # Never hardcode the skill directory name here - the check must survive repo renames.
   $candidates = @($PWD.Path)
   $skillsBase = Join-Path $env:USERPROFILE ".config\opencode\skills"
   if (Test-Path -LiteralPath $skillsBase) {
@@ -122,7 +127,6 @@ $elp = Join-Path $skillRoot "references/event-log-patterns.md"
 $stray = $false
 if (Test-Path -LiteralPath $elp) {
   $lines = Get-Content -LiteralPath $elp -Encoding UTF8
-  # Look for lone "Level" line inside CSS (previous bug)
   $stray = ($lines | Where-Object { $_ -match '^\s*"Level"\s*$' }).Count -gt 0
 }
 Write-Result "No stray Level in event-log-patterns.md" (-not $stray)
@@ -139,6 +143,9 @@ Write-Result "ValidateSet 7 values in Get-Graph403Message.ps1" $has7b $graphSet.
 $wl = Get-Content -LiteralPath (Join-Path $skillRoot "scripts/Write-Log.ps1") -Raw -Encoding UTF8
 Write-Result "Write-Log default Type General" ($wl -match '\$Type\s*=\s*[''"]General[''"]')
 
+# 7b. Canonical CLI Write-Summary helper present in Write-Log.ps1
+Write-Result "Write-Log defines Write-Summary helper" ($wl -match 'function\s+Write-Summary')
+
 # 8. Get-Content -Raw -Encoding UTF8 in Test-XamlFile.ps1
 $tx = Get-Content -LiteralPath (Join-Path $skillRoot "scripts/Test-XamlFile.ps1") -Raw -Encoding UTF8
 Write-Result "Test-XamlFile uses -Encoding UTF8" ($tx -match "Get-Content.*-Encoding UTF8")
@@ -148,10 +155,12 @@ Write-Result "_header-canonical.md exists" (Test-Path -LiteralPath (Join-Path $s
 Write-Result "_logging-canonical.md exists" (Test-Path -LiteralPath (Join-Path $skillRoot "references/_logging-canonical.md"))
 Write-Result "_graph-canonical.md exists" (Test-Path -LiteralPath (Join-Path $skillRoot "references/_graph-canonical.md"))
 
-# 10. SKILL.md lean check (target <800, ideal <500 — was 768 at v1.2; raised
-#     for Empty-Message Spacer Rule in v1.3)
+# 10. SKILL.md lean check (target <900, ideal <500 — was 768 at v1.2; raised
+#     for Empty-Message Spacer Rule in v1.3, CLI Write-Summary in 1.3.x,
+#     and HTML Fidelity Rules 24-28 + Audit Protocol in v1.5.0 as
+#     canonical content legitimately accumulates)
 $skillLines = (Get-Content -LiteralPath (Join-Path $skillRoot "SKILL.md") -Encoding UTF8).Count
-Write-Result "SKILL.md lean (<800 lines, was 768)" ($skillLines -lt 800) "$skillLines lines"
+Write-Result "SKILL.md lean (<900 lines)" ($skillLines -lt 900) "$skillLines lines"
 
 # 10b. Template library: every scaffold exists, parses, and obeys header order
 $templatesDir = Join-Path $skillRoot "templates"
@@ -183,6 +192,55 @@ if (Test-Path -LiteralPath $templatesDir) {
     Write-Result "macOS template shebang" ($shebang -eq "#!/bin/bash")
   }
 }
+
+# 11. Get-Help smoke test for canonical scripts
+Get-ChildItem -Path (Join-Path $skillRoot "scripts") -Filter "*.ps1" | ForEach-Object {
+  $helpInfo = Get-Help $_.FullName -Full -ErrorAction SilentlyContinue
+  $hasHelp = ($null -ne $helpInfo) -and ($helpInfo.description -or $helpInfo.Synopsis)
+  Write-Result "Get-Help parse $($_.Name)" $hasHelp
+}
+
+# 12. SKILL.md TOC vs Headings check
+$skillContent = Get-Content -LiteralPath (Join-Path $skillRoot "SKILL.md") -Raw -Encoding UTF8
+$tocSectionMatch = [regex]::Match($skillContent, '(?s)##\s+Table of Contents.*?(?=\r?\n---|\r?\n## )')
+$tocSection = if ($tocSectionMatch.Success) { $tocSectionMatch.Value } else { $skillContent }
+$tocAnchors = [regex]::Matches($tocSection, '\[([^\]]+)\]\(#([a-z0-9-]+)\)')
+$headings = [regex]::Matches($skillContent, '(?m)^##+\s+(.+)$')
+$headingSlugs = @($headings | ForEach-Object {
+    $_.Groups[1].Value.Trim().ToLower() -replace '[^\w\s-]', '' -replace '\s+', '-'
+})
+$orphanedTOC = 0
+foreach ($match in $tocAnchors) {
+    $anchor = $match.Groups[2].Value
+    if ($headingSlugs -notcontains $anchor -and $anchor -ne 'table-of-contents') {
+        $orphanedTOC++
+    }
+}
+Write-Result "SKILL.md TOC anchors valid" ($orphanedTOC -eq 0) "$orphanedTOC orphaned anchor(s)"
+
+# 13. README structure map present
+$readmeContent = Get-Content -LiteralPath (Join-Path $skillRoot "README.md") -Raw -Encoding UTF8
+$hasMap = $readmeContent -match 'scripts/' -and $readmeContent -match 'templates/' -and $readmeContent -match 'references/'
+Write-Result "README structure map present" $hasMap
+
+# 14. SKILL.md Hardcoded Rules count >= 28
+$hardcodedSection = $skillContent.Substring($skillContent.IndexOf('## Hardcoded Rules'))
+$hardcodedSection = $hardcodedSection.Substring(0, $hardcodedSection.IndexOf('## Lessons Learned'))
+$ruleCount = ([regex]::Matches($hardcodedSection, '(?m)^\d+\.\s+\*\*')).Count
+Write-Result "SKILL.md Hardcoded Rules >=28" ($ruleCount -ge 28) "$ruleCount rules"
+
+# 15. Export-CarbonHtml must be absent as canonical helper (only allowed in "not X" explanatory text)
+$skillRaw = Get-Content -LiteralPath (Join-Path $skillRoot "SKILL.md") -Raw -Encoding UTF8
+$hasCarbonHtmlAsHelper = $skillRaw -match '`Export-CarbonHtml`' -or $skillRaw -match 'via the canonical.*Export-CarbonHtml'
+Write-Result "No Export-CarbonHtml as canonical helper in SKILL.md" (-not $hasCarbonHtmlAsHelper)
+
+# 16. evals.json eval count >= 28
+$evalsPath = Join-Path $skillRoot "evals/evals.json"
+$evalsCount = 0
+if (Test-Path -LiteralPath $evalsPath) {
+    try { $evalsJson = Get-Content -LiteralPath $evalsPath -Raw -Encoding UTF8 | ConvertFrom-Json; $evalsCount = $evalsJson.evals.Count } catch { $evalsCount = 0 }
+}
+Write-Result "evals.json >=28 evals" ($evalsCount -ge 28) "$evalsCount evals"
 
 Write-Host "`nResults: $passed passed, $failed failed" -ForegroundColor $(if ($failed -eq 0) { "Green" } else { "Red" })
 if ($failed -gt 0) { exit 1 } else { exit 0 }

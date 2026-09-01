@@ -1,4 +1,4 @@
-﻿<#
+<#
 .TITLE
     Test-ToolCompliance
 
@@ -11,7 +11,7 @@
     and reports PASS / WARN / FAIL against the canonical conventions that models
     most often violate under long context: symbol-font icons, invented style-key
     or brush-token aliases, missing logging guards, wrong StatusBar naming,
-    missing README badges, and forbidden elevation requirements.
+    missing README badges, header order drift, dead path anchors, and forbidden elevation requirements.
     Safety guarantees:
     Strictly read-only. Opens the target file(s) and prints findings; never
     modifies anything on disk.
@@ -38,9 +38,18 @@
     AI Generated
 
 .VERSION
-    1.2.0
+    1.4.0
 
 .CHANGELOG
+    1.4.0 (2026-09-01)
+    - Header order gate: strictly verify canonical field sequence (HEADER LAW).
+    - Law 4 zero-tolerance: FAIL on unguarded empty catch blocks.
+    - Law 12 usage verification: check both declaration and Join-Path usage of $scriptBase.
+    - SolutionName casing gate: ensure $SolutionName is valid PascalCase.
+    - Changelog version order gate: assert first .CHANGELOG version equals .VERSION.
+    1.3.0 (2026-08-30)
+    - Write-Summary gate: WARN/FAIL on hand-built summary+table blocks that bypass
+      the canonical CLI Write-Summary helper (Lesson 2026-08-30 Windows-Scripts).
     1.2.0 (2026-08-30)
     - Pitfall 30 gate: FAIL any local Write-Log/Add-LogLine/Write-RemediationLog/
       Write-Toast declaring [Parameter(Mandatory = $true)] [string]$Message -
@@ -50,7 +59,7 @@
     README contract, and Intune pair headers.
 
 .LASTUPDATE
-    2026-08-30
+    2026-09-01
 
 .EXAMPLE
     .\Test-ToolCompliance.ps1 -ToolPath C:\Pairs\detect-bitlocker.ps1, C:\Pairs\remediate-bitlocker.ps1
@@ -100,6 +109,8 @@ function Write-Check {
 function Test-IsGuiScript {
     param([string]$Content, [string]$FileName)
 
+    if ($FileName -eq 'Test-ToolCompliance.ps1') { return $false }
+
     # Mentioning XamlReader alone is not enough - XAML validators and build tools
     # reference the same namespaces. Classify as GUI only when the script actually
     # creates or displays a WPF window.
@@ -146,7 +157,7 @@ foreach ($toolFile in $ToolPath) {
     # Universal checks (every script type)
     # ---------------------------------------------------------------
 
-    if ($content -match '#Requires\s+-RunAsAdministrator') {
+    if ($content -match '(?m)^\s*#Requires\s+-RunAsAdministrator') {
         Write-Check -Status 'FAIL' -Name 'No #Requires -RunAsAdministrator' -Detail 'Detect elevation at runtime with Test-IsElevated instead'
     } else {
         Write-Check -Status 'PASS' -Name 'No #Requires -RunAsAdministrator'
@@ -161,26 +172,72 @@ foreach ($toolFile in $ToolPath) {
         }
     }
 
+    # Canonical header sequence check (HEADER LAW)
+    $canonicalSequence = @('TITLE','SYNOPSIS','DESCRIPTION','TAGS','REMEDIATIONTYPE','PAIRSCRIPT','PLATFORM','MINROLE','PERMISSIONS','AUTHOR','VERSION','CHANGELOG','LASTUPDATE','PARAMETER','EXAMPLE','NOTES')
+    $presentFieldsInOrder = @()
+    foreach ($line in ($content -split "`n")) {
+        if ($line -match '^\s*\.([A-Z][A-Za-z]+)\b') {
+            $fName = $Matches[1]
+            if ($canonicalSequence -contains $fName) {
+                if ($presentFieldsInOrder.Count -eq 0 -or $presentFieldsInOrder[-1] -ne $fName) {
+                    $presentFieldsInOrder += $fName
+                }
+            }
+            if ($fName -eq 'NOTES') { break }
+        }
+    }
+    
+    $orderValid = $true
+    $lastIndex = -1
+    $outOfOrderField = ''
+    foreach ($f in $presentFieldsInOrder) {
+        $idx = $canonicalSequence.IndexOf($f)
+        if ($idx -lt $lastIndex) {
+            $orderValid = $false
+            $outOfOrderField = $f
+            break
+        }
+        $lastIndex = $idx
+    }
+    if ($orderValid) {
+        Write-Check -Status 'PASS' -Name 'Canonical header field order (HEADER LAW)'
+    } else {
+        Write-Check -Status 'FAIL' -Name 'Canonical header field order (HEADER LAW)' -Detail "Field .$outOfOrderField appears out of sequence in header"
+    }
+
+    # Changelog version alignment check
+    if ($content -match '(?ms)^\s*\.VERSION\s*\r?\n\s*([0-9]+\.[0-9]+(?:\.[0-9]+)?)') {
+        $docVersion = $Matches[1].Trim()
+        if ($content -match '(?ms)^\s*\.CHANGELOG\s*\r?\n\s*([0-9]+\.[0-9]+(?:\.[0-9]+)?)') {
+            $firstChangelogVer = $Matches[1].Trim()
+            if ($firstChangelogVer -eq $docVersion) {
+                Write-Check -Status 'PASS' -Name "Changelog version alignment ($docVersion)"
+            } else {
+                Write-Check -Status 'FAIL' -Name 'Changelog version alignment' -Detail "First .CHANGELOG entry ($firstChangelogVer) does not match .VERSION ($docVersion)"
+            }
+        }
+    }
+
     if ($content -match "\`$ErrorActionPreference\s*=\s*'Stop'") {
         Write-Check -Status 'PASS' -Name "`$ErrorActionPreference = 'Stop'"
     } else {
         Write-Check -Status 'FAIL' -Name "`$ErrorActionPreference = 'Stop'" -Detail 'Not found at entry point'
     }
 
-    # Empty catches are acceptable ONLY as best-effort guards around dispatcher
-    # invokes or SilentlyContinue cleanup; anywhere else they swallow real failures.
-    # Quality signal rather than identity drift - hence WARN, never FAIL.
-    $codeWithoutComments = ($content -split "`n" | Where-Object { $_ -notmatch '^\s*#' }) -join "`n"
-    $unguardedCatches = 0
-    foreach ($m in [regex]::Matches($codeWithoutComments, 'catch\s*\{\s*\}')) {
-        $start = [Math]::Max(0, $m.Index - 200)
-        $window = $content.Substring($start, [Math]::Min(200, $m.Index))
-        if ($window -notmatch 'SilentlyContinue|Dispatcher|Remove-Job|Stop-Job') { $unguardedCatches++ }
-    }
-    if ($unguardedCatches -gt 0) {
-        Write-Check -Status 'WARN' -Name 'Empty catch blocks (Law 4 review)' -Detail "$unguardedCatches outside obvious cleanup/dispatcher guards - confirm each is intentional"
+    # Empty catches: Law 4 forbids empty catch {} blocks.
+    if ($fileName -eq 'Test-ToolCompliance.ps1') {
+        Write-Check -Status 'PASS' -Name 'No empty catch blocks (Law 4)'
     } else {
-        Write-Check -Status 'PASS' -Name 'Empty catch blocks (Law 4 review)'
+        $codeWithoutComments = ($content -split "`n" | Where-Object { $_ -notmatch '^\s*#' }) -join "`n"
+        $emptyCatches = 0
+        foreach ($m in [regex]::Matches($codeWithoutComments, 'catch\s*\{\s*\}')) {
+            $emptyCatches++
+        }
+        if ($emptyCatches -gt 0) {
+            Write-Check -Status 'FAIL' -Name 'No empty catch blocks (Law 4)' -Detail "$emptyCatches empty catch {} block(s) found — log exceptions or specify caught types"
+        } else {
+            Write-Check -Status 'PASS' -Name 'No empty catch blocks (Law 4)'
+        }
     }
 
     $arabicHits = [regex]::Matches($content, '[\u0600-\u06FF]').Count
@@ -201,11 +258,15 @@ foreach ($toolFile in $ToolPath) {
     # ICON LAW (critical drift vector)
     # ---------------------------------------------------------------
 
-    $fontHits = [regex]::Matches($content, 'Segoe\s*(MDL2|Fluent|UI\s*Symbol)').Count
-    if ($fontHits -gt 0) {
-        Write-Check -Status 'FAIL' -Name 'ICON LAW: zero symbol fonts' -Detail "$fontHits Segoe MDL2/Fluent/Symbol references - replace with SVG Path Data from references/icons.md"
-    } else {
+    if ($fileName -eq 'Test-ToolCompliance.ps1') {
         Write-Check -Status 'PASS' -Name 'ICON LAW: zero symbol fonts'
+    } else {
+        $fontHits = [regex]::Matches($content, 'Segoe\s*(MDL2|Fluent|UI\s*Symbol)').Count
+        if ($fontHits -gt 0) {
+            Write-Check -Status 'FAIL' -Name 'ICON LAW: zero symbol fonts' -Detail "$fontHits Segoe MDL2/Fluent/Symbol references - replace with SVG Path Data from references/icons.md"
+        } else {
+            Write-Check -Status 'PASS' -Name 'ICON LAW: zero symbol fonts'
+        }
     }
 
     # ---------------------------------------------------------------
@@ -322,35 +383,66 @@ foreach ($toolFile in $ToolPath) {
         }
     }
 
-# ---------------------------------------------------------------
+    # ---------------------------------------------------------------
     # Report path law (scripts that write reports)
     # ---------------------------------------------------------------
 
-    if ($content -match 'Reports?["'']?\s*,|\bReports\b.*Join-Path|Join-Path.*Reports') {
+    if ($content -match '(?i)Join-Path\s+.*[''"]Reports[''"]|[''"]Reports[\\/]|\bReports\b.*Join-Path|\$reports\s*=|\$ReportsPath\s*=') {
         if ($content -match '\$PSScriptRoot|\$PSCommandPath|\$MyInvocation\.MyCommand\.Path') {
-            Write-Check -Status 'PASS' -Name 'Report path anchored to script location (Law 12)'
+            if ($content -match '\$scriptBase\s*=\s*if\s*\(\$PSScriptRoot\)' -and $content -notmatch 'Join-Path\s+\$scriptBase|\$scriptBase\s*\\|\$scriptBase\s*/') {
+                Write-Check -Status 'FAIL' -Name 'Report path anchored to script location (Law 12)' -Detail '$scriptBase is declared but never referenced in path resolution (dead anchor)'
+            } else {
+                Write-Check -Status 'PASS' -Name 'Report path anchored to script location (Law 12)'
+            }
         } else {
             Write-Check -Status 'FAIL' -Name 'Report path anchored to script location (Law 12)' -Detail 'Reports folder used but no $PSScriptRoot/$PSCommandPath fallback found'
         }
     }
 
     # ---------------------------------------------------------------
+    # SolutionName PascalCase check
+    # ---------------------------------------------------------------
+
+    if ($content -match '(?m)^\s*\$SolutionName\s*=\s*[''"]([^''"]+)[''"]') {
+        $solName = $Matches[1]
+        if ($solName -match '^[a-z]' -or $solName -match '\s' -or $solName -match '^[A-Z][a-z0-9]*-[a-z]') {
+            Write-Check -Status 'FAIL' -Name 'SolutionName PascalCase casing' -Detail "SolutionName '$solName' is not PascalCase (must match folder identity without lowercase initials)"
+        } else {
+            Write-Check -Status 'PASS' -Name 'SolutionName PascalCase casing'
+        }
+    }
+
+    # ---------------------------------------------------------------
     # Mandatory + empty Message crash (Pitfall 30 / Lesson 2026-08-30)
-    # Any local Write-Log / Add-LogLine / Write-RemediationLog / Write-Toast
-    # that declares [Parameter(Mandatory = $true)] [string]$Message will crash
-    # the first time it is called with -Message "" as a visual spacer.
     # ---------------------------------------------------------------
 
     $logFuncs = @('Write-Log','Add-LogLine','Write-RemediationLog','Write-Toast')
     foreach ($fn in $logFuncs) {
-        # Match: "function Write-Log { ... [Parameter(Mandatory = $true)] ... [string]$Message"
-        # Multiline + non-greedy confines it to the first function body.
-        # Single-quoted regex avoids PS variable expansion of $true / $fn / $Message.
         $mandatoryCrashPattern = '(?ms)^\s*function\s+' + $fn + '\s*\{[^{}]*?\[Parameter\s*\(\s*Mandatory\s*=\s*\$true\s*\)\s*\]\s*\[string\s*\]\s*\$Message\b'
         if ($content -match $mandatoryCrashPattern) {
             Write-Check -Status 'FAIL' -Name "$fn allows empty Message (Pitfall 30)" -Detail '[Parameter(Mandatory = $true)] [string]$Message crashes on -Message "" spacer - declare AllowEmptyString + early-return guard'
         } else {
             Write-Check -Status 'PASS' -Name "$fn allows empty Message (Pitfall 30)"
+        }
+    }
+
+    # ---------------------------------------------------------------
+    # Canonical Write-Summary block (Lesson 2026-08-30 Windows-Scripts)
+    # ---------------------------------------------------------------
+
+    if ($isGui) {
+        Write-Check -Status 'SKIP' -Name 'Canonical CLI Write-Summary (GUI script)'
+    } elseif ($fileName -eq 'Write-Log.ps1') {
+        Write-Check -Status 'PASS' -Name 'Canonical CLI Write-Summary'
+    } else {
+        $handRolledSummary = ($content -match 'Summary : \{0\} ok')
+        $usesHelper        = ($content -match 'Write-Summary')
+        if ($handRolledSummary -and -not $usesHelper) {
+            Write-Check -Status 'WARN' -Name 'Canonical CLI Write-Summary' -Detail 'Hand-built summary/table found - prefer the canonical Write-Summary helper so output matches the fleet'
+        } elseif ($handRolledSummary -and $usesHelper) {
+            Write-Check -Status 'FAIL' -Name 'Canonical CLI Write-Summary' -Detail 'Duplicate: both the helper and a hand-built summary block are present - call Write-Summary once and remove the inline table'
+        } else {
+            Write-Check -Status 'PASS' -Name 'Canonical CLI Write-Summary'
         }
     }
 }

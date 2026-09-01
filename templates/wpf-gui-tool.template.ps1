@@ -1,4 +1,4 @@
-﻿<#
+<#
 .TITLE
     [ToolName] - [Brief Purpose]
 
@@ -122,7 +122,9 @@ $script:OnLogEntry = {
     if ($script:LogViewerBox) {
         try {
             Add-LogViewerLine -Box $script:LogViewerBox -Entry $script:LogEntries[-1]
-        } catch { }
+        } catch {
+            Write-Verbose "Failed to update LogViewerBox: $_"
+        }
     }
 }
 

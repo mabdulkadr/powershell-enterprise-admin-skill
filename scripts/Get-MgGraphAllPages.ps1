@@ -1,4 +1,4 @@
-﻿<#
+<#
 .TITLE
     Get-MgGraphAllPages
 
@@ -8,18 +8,6 @@
 .DESCRIPTION
     Retrieves all pages from a Microsoft Graph API endpoint automatically following @odata.nextLink.
     Uses List[PSCustomObject] for O(1) appending performance and handles rate limiting with bounded retries.
-
-.PARAMETER Headers
-    Hashtable of optional HTTP headers (e.g. ConsistencyLevel = 'eventual').
-
-.PARAMETER Max429Retries
-    Maximum consecutive retries when encountering HTTP 429 throttling. Default is 3.
-
-.PARAMETER Uri
-    Initial Microsoft Graph endpoint URI.
-
-.PARAMETER DelayMs
-    Delay in milliseconds between page requests to avoid hitting rate limits. Default is 100.
 
 .TAGS
     Graph,Pagination
@@ -44,8 +32,23 @@
 .LASTUPDATE
     2026-08-20
 
+.PARAMETER Headers
+    Hashtable of optional HTTP headers (e.g. ConsistencyLevel = 'eventual').
+
+.PARAMETER Max429Retries
+    Maximum consecutive retries when encountering HTTP 429 throttling. Default is 3.
+
+.PARAMETER Uri
+    Initial Microsoft Graph endpoint URI.
+
+.PARAMETER DelayMs
+    Delay in milliseconds between page requests to avoid hitting rate limits. Default is 100.
+
 .EXAMPLE
     $devices = Get-MgGraphAllPages -Uri "https://graph.microsoft.com/v1.0/devices?`$select=id,displayName"
+.NOTES
+    - Pagination helper — follow @odata.nextLink verbatim; handles 429 Retry-After.
+
 #>
 
 #Requires -Version 5.1
@@ -107,8 +110,14 @@ function Get-MgGraphAllPages {
                 }
                 # Honor Retry-After header if present, else exponential backoff capped at 60s
                 $retryAfter = $null
-                try { $retryAfter = $_.Exception.Response.Headers['Retry-After'] } catch {}
-                if (-not $retryAfter) { try { $retryAfter = $_.Exception.Response.Headers['retry-after'] } catch {} }
+                try {
+                    if ($_.Exception.Response -and $_.Exception.Response.Headers) {
+                        $retryAfter = $_.Exception.Response.Headers['Retry-After']
+                        if (-not $retryAfter) { $retryAfter = $_.Exception.Response.Headers['retry-after'] }
+                    }
+                } catch [System.Exception] {
+                    $retryAfter = $null
+                }
                 $delaySec = if ($retryAfter -and [int]::TryParse($retryAfter.ToString().Split(',')[0], [ref]$null)) { [int]$retryAfter.ToString().Split(',')[0] } else { [Math]::Min(60, [Math]::Pow(2, $consecutive429) * 5) }
                 Write-Warning "Rate limit hit (attempt $consecutive429/$Max429Retries), waiting $delaySec seconds..."
                 Start-Sleep -Seconds $delaySec

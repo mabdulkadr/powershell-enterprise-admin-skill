@@ -11,22 +11,6 @@
     saveToSentItems = $false (Managed Identity has no mailbox). Always pair
     with Microsoft Graph authentication (Connect-MgGraph -Identity in runbooks).
 
-.PARAMETER To
-    Recipient email address (single recipient; loop outside for multi).
-
-.PARAMETER Subject
-    Mail subject line.
-
-.PARAMETER HtmlBody
-    HTML content for the message body.
-
-.PARAMETER FromUserId
-    User UPN to send "from" via /users/{id}/sendMail. REQUIRED in Azure Automation
-    runbooks - $env:USERNAME resolves to the worker account (e.g., OASTokenSrv01)
-    and Invoke-MgGraphRequest will fail with ResourceNotFound. Use a real mailbox UPN
-    such as 'ops-notifications@contoso.com'. Optional on interactive sessions when
-    $env:USERNAME is the operator's UPN.
-
 .TAGS
     Graph,Email,Notification
 
@@ -43,10 +27,27 @@
     1.0.0
 
 .CHANGELOG
-    1.0.0 (2026-08-24) - Initial release (extracted from templates/intune-notification.template.ps1)
+    1.0.0 (2026-08-24)
+    - Initial release (extracted from templates/intune-notification.template.ps1)
 
 .LASTUPDATE
     2026-08-24
+
+.PARAMETER To
+    Recipient email address (single recipient; loop outside for multi).
+
+.PARAMETER Subject
+    Mail subject line.
+
+.PARAMETER HtmlBody
+    HTML content for the message body.
+
+.PARAMETER FromUserId
+    User UPN to send "from" via /users/{id}/sendMail. REQUIRED in Azure Automation
+    runbooks - $env:USERNAME resolves to the worker account (e.g., OASTokenSrv01)
+    and Invoke-MgGraphRequest will fail with ResourceNotFound. Use a real mailbox UPN
+    such as 'ops-notifications@contoso.com'. Optional on interactive sessions when
+    $env:USERNAME is the operator's UPN.
 
 .EXAMPLE
     Send-EmailNotification -To 'ops@contoso.com' -Subject 'Daily Report' -HtmlBody $html

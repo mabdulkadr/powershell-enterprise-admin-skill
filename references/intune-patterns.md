@@ -1010,6 +1010,8 @@ Finish-Script -ExitCode 2 -Message "Script execution error: $($_.Exception.Messa
 
 **Why this matters:** Without `Finish-Script`, you end up with `Write-Log` + `exit` duplicated in every branch. With it, each exit point is a single readable line — and the log level matches the exit code semantics.
 
+**Per-target result block:** when a script processes multiple targets (see Per-Target Failure Tracking), print the canonical end-of-run block with `Write-Summary -Results $results` (from `scripts/Write-Log.ps1`) immediately before `Finish-Script`. It renders one colored status line plus an aligned `Target/Result/Skipped/Error` table and computes `ok/skipped/failed` internally — do not hand-build a second summary line or table, or output drifts across the fleet. See `SKILL.md` → CLI `Write-Summary` for the exact block.
+
 ### Config-Driven Command Execution
 
 When a remediation runs an external command (ipconfig, shutdown, msiexec, etc.), define the command in a configuration block at the top. This makes the script easy to adapt — change the command without touching the logic.

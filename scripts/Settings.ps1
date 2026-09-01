@@ -13,13 +13,6 @@
     $Settings. Wrappers Load-UserSettings / Save-UserSettings are kept for
     template back-compat (wpf-gui-tool.template.ps1).
 
-.PARAMETER ToolNameOverride
-    Override tool name for settings path. Defaults to $ToolName, $script:ToolName,
-    or the caller script file name (without .template suffix).
-
-.PARAMETER Settings
-    Hashtable of settings to persist.
-
 .TAGS
     Settings,GUI,WPF,PatternQ
 
@@ -41,6 +34,13 @@
 
 .LASTUPDATE
     2026-08-24
+
+.PARAMETER ToolNameOverride
+    Override tool name for settings path. Defaults to $ToolName, $script:ToolName,
+    or the caller script file name (without .template suffix).
+
+.PARAMETER Settings
+    Hashtable of settings to persist.
 
 .EXAMPLE
     $s = Get-AppSettings

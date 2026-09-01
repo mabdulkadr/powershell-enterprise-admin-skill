@@ -1,4 +1,4 @@
-﻿# Code Patterns — The 21 Canonical Enterprise Patterns
+# Code Patterns — The 21 Canonical Enterprise Patterns
 
 Every primitive you need to build a tool. Each pattern is the canonical implementation — copy it, place it in the right file, customize the action.
 
@@ -942,146 +942,142 @@ function Export-ExecutiveHtmlReport {
         $trHtml += "<tr>$($tds -join '')</tr>`n"
     }
 
-    $generatedDate = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
-
-    $html = @"
+    # Build using Canonical IBM Carbon Dark HTML Report Design System
+    # Single source of truth: templates/EnterpriseHtmlReport.template.ps1
+    $head = @"
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>$ReportTitle</title>
-    <style>
-        :root {
-            --bg: #F1F5F9;
-            --bg-gradient: radial-gradient(1200px 600px at 20% -10%, #DBEAFE 0%, transparent 60%), radial-gradient(900px 500px at 90% 0%, #E9D5FF 0%, transparent 55%), #F1F5F9;
-            --surface: #FFFFFF;
-            --surface-hover: #F8FAFC;
-            --border: #E2E8F0;
-            --border-strong: #CBD5E1;
-            --text-main: #0F172A;
-            --text-muted: #64748B;
-            --text-faint: #94A3B8;
-            --accent: #3B82F6;
-            --accent-soft: #EFF6FF;
-            --success: #10B981;
-            --success-soft: #ECFDF5;
-            --shadow: 0 12px 24px rgba(15,23,42,0.06), 0 4px 8px rgba(15,23,42,0.04);
-            --shadow-hover: 0 16px 32px rgba(15,23,42,0.08), 0 8px 16px rgba(59,130,246,0.08);
-            --radius: 16px;
-        }
-        [data-theme="dark"] {
-            --bg: #0F172A;
-            --bg-gradient: radial-gradient(1000px 600px at 20% -10%, #1E293B 0%, transparent 60%), #0F172A;
-            --surface: #1E293B;
-            --surface-hover: #334155;
-            --border: #334155;
-            --text-main: #F1F5F9;
-            --text-muted: #94A3B8;
-            --accent-soft: #1E3A5F;
-            --shadow: 0 12px 32px rgba(0,0,0,0.35);
-        }
-        * { box-sizing: border-box; }
-        body {
-            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: var(--bg);
-            background-image: var(--bg-gradient);
-            color: var(--text-main);
-            margin: 0;
-            padding: 32px 20px 40px;
-            line-height: 1.5;
-            -webkit-font-smoothing: antialiased;
-        }
-        .container { max-width: 1280px; margin: 0 auto; }
-        .hero {
-            background: linear-gradient(135deg, #3B82F6 0%, #6366F1 45%, #8B5CF6 100%);
-            color: white; border-radius: var(--radius); padding: 28px; box-shadow: 0 16px 32px rgba(59,130,246,0.25);
-            position: relative; overflow: hidden; margin-bottom: 20px;
-        }
-        .hero::before { content: ""; position: absolute; inset: -40% -20% auto auto; width: 420px; height: 420px; background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.18), transparent 60%); pointer-events: none; }
-        .hero h1 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
-        .hero .subtitle { margin: 6px 0 0; font-size: 13px; opacity: 0.92; font-weight: 500; }
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-bottom: 18px; }
-        .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 16px; overflow: hidden; transition: transform 0.18s, box-shadow 0.18s; }
-        .card:hover { transform: translateY(-1px); box-shadow: var(--shadow-hover); }
-        .kpi-card { position: relative; overflow: hidden; }
-        .kpi-card::after { content: ""; position: absolute; inset: auto -20px -20px auto; width: 90px; height: 90px; background: radial-gradient(circle at 30% 30%, var(--accent-soft), transparent 70%); opacity: 0.9; pointer-events: none; }
-        .kpi-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-        .kpi-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); }
-        .kpi-icon { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
-        .kpi-icon.cpu { background: #EFF6FF; color: #2563EB; } .kpi-icon.ram { background: #F5F3FF; color: #7C3AED; } .kpi-icon.disk { background: #ECFDF5; color: #059669; } .kpi-icon.uptime { background: #FFF7ED; color: #EA580C; }
-        .kpi-value { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
-        .kpi-value.accent { color: var(--accent); } .kpi-value.success { color: var(--success); }
-        .search-box { width: 100%; padding: 9px 12px 9px 30px; border: 1px solid var(--border); border-radius: 10px; font-size: 13px; outline: none; background: var(--surface); color: var(--text-main); }
-        .search-box:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.14); }
-        .table-container { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
-        th { background: var(--surface-hover); color: var(--text-muted); padding: 11px 16px; font-weight: 700; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; border-bottom: 1px solid var(--border); position: sticky; top: 0; }
-        td { padding: 12px 16px; border-bottom: 1px solid var(--border); }
-        tr:hover td { background: var(--surface-hover); }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>$ReportTitle</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+:root {
+    --cds-background: #161616;
+    --cds-layer-01: #262626;
+    --cds-layer-02: #353535;
+    --cds-border-strong-01: #4d4d4d;
+    --cds-border-subtle-01: #393939;
+    --cds-text-primary: #f4f4f4;
+    --cds-text-secondary: #c6c6c6;
+    --cds-text-helper: #8d8d8d;
+    --cds-blue: #0f62fe;
+    --cds-support-success: #24a148;
+    --cds-support-warning: #f1c21b;
+    --cds-support-error: #da1e28;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--cds-background);
+    color: var(--cds-text-primary);
+    padding: 32px 24px;
+    line-height: 1.5;
+}
+.container { max-width: 1320px; margin: 0 auto; }
+.header { border-bottom: 1px solid var(--cds-border-subtle-01); padding-bottom: 24px; margin-bottom: 24px; }
+.title { font-size: 28px; font-weight: 400; }
+.subtitle { font-size: 14px; color: var(--cds-text-secondary); margin-top: 6px; }
+.kpi-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.kpi-card { background: var(--cds-layer-01); border: 1px solid var(--cds-border-subtle-01); border-top: 3px solid var(--cds-blue); padding: 16px; }
+.kpi-label { font-size: 12px; color: var(--cds-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+.kpi-value { font-size: 28px; font-family: 'IBM Plex Mono', monospace; font-weight: 600; margin-top: 4px; }
+.card { background: var(--cds-layer-01); border: 1px solid var(--cds-border-subtle-01); padding: 20px; margin-bottom: 24px; }
+.search-box { width: 100%; padding: 10px 14px; border: 1px solid var(--cds-border-strong-01); background: var(--cds-layer-02); color: var(--cds-text-primary); font-size: 13px; margin-bottom: 16px; outline: none; }
+.search-box:focus { border-color: var(--cds-blue); }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { background: var(--cds-layer-02); color: var(--cds-text-secondary); text-align: left; padding: 12px 16px; font-weight: 600; border-bottom: 1px solid var(--cds-border-strong-01); }
+td { padding: 12px 16px; border-bottom: 1px solid var(--cds-border-subtle-01); }
+tr:hover td { background: var(--cds-layer-02); }
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="hero">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; position:relative;">
-                <div>
-                    <h1>$ReportTitle</h1>
-                    <div class="subtitle">Generated on $generatedDate • Host: $env:COMPUTERNAME • Records: $($DataRows.Count)</div>
-                </div>
-                <button onclick="toggleTheme()" style="width:38px; height:38px; border-radius:10px; border:1px solid rgba(255,255,255,0.22); background:rgba(255,255,255,0.14); color:white; cursor:pointer; backdrop-filter:blur(6px);">◐</button>
-            </div>
-        </div>
-
-        <div class="kpi-grid">
-            <div class="kpi-card">
-                <div class="kpi-head"><div class="kpi-label">Total Records</div><div class="kpi-icon cpu">📊</div></div>
-                <div class="kpi-value accent">$($DataRows.Count)</div>
-            </div>
-            $kpiHtml
-        </div>
-
-        <div class="card">
-            <input type="text" id="filterInput" class="search-box" placeholder="Filter records in real-time..." onkeyup="filterTable()">
-            <div class="table-container">
-                <table id="reportTable">
-                    <thead>
-                        <tr>$thHtml</tr>
-                    </thead>
-                    <tbody>
-                        $trHtml
-                    </tbody>
-                </table>
-            </div>
+<div class="container">
+    <div class="header">
+        <h1 class="title">$ReportTitle</h1>
+        <div class="subtitle">Generated: $generatedDate | Host: $env:COMPUTERNAME | Records: $($DataRows.Count)</div>
+    </div>
+    <div class="kpi-bar">
+        <div class="kpi-card"><div class="kpi-label">Total Records</div><div class="kpi-value">$($DataRows.Count)</div></div>
+        $kpiHtml
+    </div>
+    <div class="card">
+        <input type="text" id="filterInput" class="search-box" placeholder="Filter records in real-time..." onkeyup="filterTable()">
+        <div class="table-wrap">
+            <table id="reportTable">
+                <thead><tr>$thHtml</tr></thead>
+                <tbody>$trHtml</tbody>
+            </table>
         </div>
     </div>
-
-    <script>
-        function toggleTheme() {
-            var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-            var next = isDark ? 'light' : 'dark';
-            if (next === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-            else document.documentElement.removeAttribute('data-theme');
-            try { localStorage.setItem('report-theme', next); } catch(e) {}
-        }
-        (function(){ try { var saved=localStorage.getItem('report-theme'); if(saved==='dark') document.documentElement.setAttribute('data-theme','dark'); } catch(e){} })();
-        function filterTable() {
-            var input = document.getElementById("filterInput");
-            var filter = input.value.toLowerCase();
-            var table = document.getElementById("reportTable");
-            var trs = table.getElementsByTagName("tr");
-
-            for (var i = 1; i < trs.length; i++) {
-                var rowText = trs[i].textContent.toLowerCase();
-                trs[i].style.display = rowText.indexOf(filter) > -1 ? "" : "none";
-            }
-        }
-    </script>
+</div>
+<script>
+function filterTable() {
+    var input = document.getElementById("filterInput");
+    var filter = input.value.toLowerCase();
+    var table = document.getElementById("reportTable");
+    var trs = table.getElementsByTagName("tr");
+    for (var i = 1; i < trs.length; i++) {
+        var rowText = trs[i].textContent.toLowerCase();
+        trs[i].style.display = rowText.indexOf(filter) > -1 ? "" : "none";
+    }
+}
+</script>
 </body>
 </html>
 "@
 
-    Set-Content -Path $OutputPath -Value $html -Encoding UTF8
+    Set-Content -Path $OutputPath -Value $head -Encoding UTF8
     Write-Log -Message "Executive HTML Report successfully generated at: $OutputPath" -Level SUCCESS
 }
+
+### Pattern U.1: Nested ForEach-Object $_ Capture
+
+When building HTML table rows from `$rows | ForEach-Object`, avoid `$_` shadowing inside nested pipelines over `PSObject.Properties`.
+
+```powershell
+# ❌ Inner pipeline rebinds $_ to PSPropertyInfo — outer row lost
+$rows | ForEach-Object {
+    $badges = $_.PSObject.Properties | Where-Object { $_.Name -eq 'Enabled' } | ForEach-Object {
+        if ($_.Name -eq 'Enabled') { $_.Enabled_Raw } # $_ is now PSPropertyInfo → $null
+    }
+    "<tr><td>$badges</td></tr>"
+}
+
+# ✅ CORRECT: Capture outer $_ before any nested pipeline
+$rows | ForEach-Object {
+    $rowRef = $_  # ← capture here, use below
+    $badge = $rowRef.PSObject.Properties | Where-Object { $_.Name -eq 'Enabled' } | ForEach-Object {
+        if ($_.Name -eq 'Enabled') { $rowRef.Enabled_Raw }
+    }
+    $encodedName = [System.Net.WebUtility]::HtmlEncode($rowRef.Name)
+    "<tr><td><code>$encodedName</code></td><td>$badge</td></tr>"
+}
+```
+
+### Pattern U.2: Try-Scope Defensive Re-Collection
+
+When HTML export consumes `$rows` populated by a prior `try` block, the prior block may have failed before assignment — HTML then reads `$null`.
+
+```powershell
+# ❌ HTML trusts cross-try survival
+try { $rows = foreach ($p in $paths) { [PSCustomObject]@{ Enabled = (if ($x) { 'Yes' } else { 'No' }) } } } catch {}
+try { $html = $rows | ForEach-Object { "<tr><td>$($_.Enabled)</td></tr>" } } catch {}
+
+# ✅ CORRECT: Defensive re-collection + extracted variables
+# Console block:
+try { $rows = foreach ($p in $paths) { $label = if ($x) { 'Yes' } else { 'No' }; [PSCustomObject]@{ Enabled = $label } } } catch {}
+
+# HTML block — self-sufficient:
+try {
+    if (-not $rows) { $rows = foreach ($p in $paths) { $label = if ($x) { 'Yes' } else { 'No' }; [PSCustomObject]@{ Enabled = $label } } }
+    $tableHtml = $rows | ForEach-Object {
+        $rowRef = $_
+        $enc = [System.Net.WebUtility]::HtmlEncode($rowRef.Enabled)
+        "<tr><td>$enc</td></tr>"
+    }
+} catch { Write-Verbose "HTML failed: $_" }
+```
 ```

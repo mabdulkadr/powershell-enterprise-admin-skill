@@ -50,7 +50,7 @@
     1.0.1 (2026-08-30)
     - Canonical rich header upgrade: .SCRIPT_NAME -> .TITLE, added .PERMISSIONS.
     1.0.0 (2026-08-27)
-    - Initial canonical Carbon dark theme template extracted from Export-IntuneDashboard
+    - Initial canonical Carbon dark theme template extracted from internal dashboard
 
 .LASTUPDATE
     2026-08-30

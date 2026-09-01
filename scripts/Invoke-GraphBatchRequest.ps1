@@ -1,4 +1,4 @@
-﻿<#
+<#
 .TITLE
     Invoke-GraphBatchRequest
 
@@ -9,15 +9,6 @@
     Sends up to 20 Graph sub-requests per POST /$batch, auto-chunking larger sets,
     and retries only the sub-requests that failed with 429/5xx using exponential backoff.
     Returns a List of per-request response objects for caller correlation.
-
-.PARAMETER MaxRetries
-    Maximum retry attempts for throttled/failed sub-requests. Default is 3.
-
-.PARAMETER ApiVersion
-    Graph API version to use ('beta' or 'v1.0'). Default is 'beta'.
-
-.PARAMETER Requests
-    Array of sub-request objects/hashtables. Each must contain 'id', 'method', and 'url'.
 
 .TAGS
     Graph,Batch,BulkOperations
@@ -42,12 +33,24 @@
 .LASTUPDATE
     2026-08-20
 
+.PARAMETER MaxRetries
+    Maximum retry attempts for throttled/failed sub-requests. Default is 3.
+
+.PARAMETER ApiVersion
+    Graph API version to use ('beta' or 'v1.0'). Default is 'beta'.
+
+.PARAMETER Requests
+    Array of sub-request objects/hashtables. Each must contain 'id', 'method', and 'url'.
+
 .EXAMPLE
     $requests = @(
     @{ id = "1"; method = "GET"; url = "/deviceManagement/managedDevices('dev-1')" },
     @{ id = "2"; method = "GET"; url = "/deviceManagement/managedDevices('dev-2')" }
     )
     $responses = Invoke-GraphBatchRequest -Requests $requests
+.NOTES
+    - Batch helper — respects 20-request limit per _graph-canonical.md.
+
 #>
 
 #Requires -Version 5.1

@@ -30,6 +30,18 @@ Every crash listed here was debugged in production. The fix is included. Read th
 22. [Pitfall: PowerShell -replace Is Case-Insensitive](#pitfall-powershell--replace-is-case-insensitive)
 23. [Pitfall: Load XAML With Parse First — Load Is A Fallback Only](#pitfall-load-xaml-with-parse-first--load-is-a-fallback-only)
 24. [Pitfall: Capture A Hash Baseline At Delivery — Treat Mismatch As External Drift First](#pitfall-capture-a-hash-baseline-at-delivery--treat-mismatch-as-external-drift-first)
+25. [Pitfall: HTML Report — Grade on KPI, Body, Row, and Chart Provenance — Not "Has a Table"](#pitfall-html-report-grade-on-kpi-body-row-and-chart-provenance-not-has-a-table)
+26. [Pitfall: HTML Body Must Not Depend on $rows From a Different try Block (Try-Scope Leak)](#pitfall-html-body-must-not-depend-on-rows-from-a-different-try-block-try-scope-leak)
+27. [Pitfall: $_ Shadowing Inside Nested ForEach-Object Breaks Property Access](#pitfall-shadowing-inside-nested-foreach-object-breaks-property-access)
+28. [Pitfall: Read param() Before Invoking — Parameter Errors Are Caller Errors](#pitfall-read-param-before-invoking-parameter-errors-are-caller-errors)
+29. [Pitfall: Recursive Get-ChildItem on Drive Root or Large Trees Times Out](#pitfall-recursive-get-childitem-on-drive-root-or-large-trees-times-out)
+30. [Pitfall: KPI Tiles Must Be Domain-Specific — Generic OK/Failed Counters Are Drift](#pitfall-kpi-tiles-must-be-domain-specific-generic-okfailed-counters-are-drift)
+31. [Pitfall: HTML Uses Carbon Dark; WPF Uses Tailwind Slate — Never Mix](#pitfall-html-uses-carbon-dark-wpf-uses-tailwind-slate-never-mix)
+32. [Pitfall: Full Triage Pass Before Any Fix — Output Sorted FAIL→WEAK→PASS Table](#pitfall-full-triage-pass-before-any-fix-output-sorted-failweakpass-table)
+33. [Pitfall: Bulk Audit (N > 3 files) → Task Agent; Single-File (N ≤ 3) → Inline read+edit](#pitfall-bulk-audit-n-3-files-task-agent-single-file-n-3-inline-readedit)
+34. [Pitfall: HtmlEncode Every Dynamic Cell — No Exceptions; Wrap Paths in code](#pitfall-htmlencode-every-dynamic-cell-no-exceptions-wrap-paths-in-code)
+35. [Pitfall: Pre-Existing Bugs Out of Scope Unless HTML Depends on Them](#pitfall-pre-existing-bugs-out-of-scope-unless-html-depends-on-them)
+36. [Pitfall: Three-Gate HTML Verification — Parser → Run → Row/Cell/Badge Count](#pitfall-three-gate-html-verification-parser-run-rowcellbadge-count)
 
 ---
 
@@ -852,4 +864,387 @@ $logLine = "[$timestamp] [$Level] $Message"
 1. Any logging helper that is called with `""` as a visual separator MUST declare `Message` as non-Mandatory with `[AllowEmptyString()]` and default `""`, then early-return on empty — mandatory + empty is a binding error, not a no-op.
 2. The canonical `scripts/Write-Log.ps1` (and any `Write-Log` it copies) must apply the same fix in the next release; until then, every CLI script that uses `Write-Log -Message ""` as a spacer needs the same declaration.
 3. When auditing a script for this crash, grep `Write-Log -Message ""` and `Add-LogLine -Message ""` — every hit is a guaranteed crash before the next non-empty line.
+
+## Pitfall: `New-Object TypeName(...)` Arithmetic Arguments Require Parentheses
+
+In PowerShell 5.1, arithmetic expressions passed inside constructor argument lists without parentheses (such as `New-Object System.Drawing.Point($x - $w, $y)`) are parsed as multiple positional parameters or parameter binding errors.
+
+```powershell
+# ❌ Crashes in PS 5.1 (treated as separate arguments)
+$pt = New-Object System.Drawing.Point($x - $offset, $y)
+
+# ✅ Parenthesize arithmetic expressions explicitly
+$pt = New-Object System.Drawing.Point(($x - $offset), $y)
+```
+
+**Rules:**
+1. Always wrap arithmetic operations in parentheses `($a - $b)` when passing them into constructor arguments of `New-Object`.
+
+## Pitfall: `Add-Type -Path` Fails with ReflectionTypeLoadException on DLL Dependencies
+
+When loading third-party or multi-assembly packages (e.g. MSAL / Graph authentication assemblies) via `Add-Type -Path`, missing transient dependencies cause unhandled `ReflectionTypeLoadException`.
+
+```powershell
+# ❌ Fragile on dependent assemblies
+Add-Type -Path $msalDllPath
+
+# ✅ Robust assembly loading with AssemblyResolve handler
+[System.AppDomain]::CurrentDomain.add_AssemblyResolve({
+    param($sender, $args)
+    $name = ($args.Name -split ',')[0] + '.dll'
+    $target = Join-Path $dllDir $name
+    if (Test-Path $target) { [System.Reflection.Assembly]::LoadFrom($target) }
+})
+[System.Reflection.Assembly]::LoadFrom($msalDllPath)
+```
+
+**Rules:**
+1. For multi-assembly DLL libraries, register an `AssemblyResolve` handler before calling `[System.Reflection.Assembly]::LoadFrom`.
+
+## Pitfall: `Set-StrictMode` Crashes on Uninitialized `$script:` Scope Variables
+
+When `Set-StrictMode -Version Latest` (or 2.0+) is enabled, referencing an uninitialized variable in `$script:` or `$global:` scope throws `PropertyNotFoundException`.
+
+```powershell
+# ❌ Throws under StrictMode if not yet assigned
+if (-not $script:lastLogKey) { ... }
+
+# ✅ Initialize script-level variables explicitly at script entry
+$script:lastLogKey = $null
+```
+
+**Rules:**
+1. Always explicitly initialize script-scope variables (`$script:var = $null`) at the top of the file when writing enterprise tools.
+
+## Pitfall: `-replace` With `$_` in Replacement String Evaluates as .NET Regex Whole Match
+
+In PowerShell `-replace` operations, `$_` inside the replacement string is interpreted by .NET regex engine as the special substitution token `$&` (the entire matched text), not the PowerShell pipeline variable.
+
+```powershell
+# ❌ Injected matched text instead of current pipeline object
+$items | ForEach-Object { $template -replace '\{\{NAME\}\}', $_ }
+
+# ✅ Escape $_ or use [regex]::Replace with a MatchEvaluator delegate
+$items | ForEach-Object { $template -replace '\{\{NAME\}\}', [regex]::Escape($_) }
+# Or string replace:
+$items | ForEach-Object { $template.Replace('{{NAME}}', "$_") }
+```
+
+**Rules:**
+1. For exact string token substitution, use `.Replace('find', 'replace')` instead of regex `-replace`, or escape the replacement string with `$$`.
+
+## Pitfall: `Write-Host` Output Capture Requires `*>&1` Not `2>&1`
+
+`Write-Host` in PowerShell writes to the Information stream (Stream 6). Piping with `2>&1` redirects only Error stream (Stream 2) to Success stream (Stream 1), completely missing all `Write-Host` output.
+
+```powershell
+# ❌ Misses all Write-Host messages
+$out = & $childScript 2>&1
+
+# ✅ Captures all streams (including information stream 6)
+$out = & $childScript *>&1
+```
+
+**Rules:**
+1. Always use `*>&1` when capturing output from child PowerShell scripts that use `Write-Host`.
+
+## Pitfall: `[string]$OutputPath = "."` Default Bypasses Script-Directory Anchoring (Law 12)
+
+Declaring `[string]$OutputPath = "."` in parameter blocks causes `$PSBoundParameters.ContainsKey('OutputPath')` or `if ($OutputPath)` to evaluate to true with the caller's working directory (`.`), completely bypassing the `$PSScriptRoot` fallback guard.
+
+```powershell
+# ❌ Bypasses beside-script resolution
+param(
+    [string]$OutputPath = "."
+)
+
+# ✅ Default to empty string and resolve in guard block
+param(
+    [string]$OutputPath = ""
+)
+$scriptDirectory = if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path }
+if (-not $OutputPath) { $OutputPath = Join-Path $scriptDirectory 'Reports' }
+```
+
+**Rules:**
+1. Default path parameters MUST be empty string `""`, never `"."` or `"Reports"`.
+
+## Pitfall: `$LASTEXITCODE` Consumed When Piping Child Script to `Out-String`
+
+Invoking a child script through a pipeline such as `& $script | Out-String` sets `$LASTEXITCODE` to the exit code of `Out-String` (which is always 0), swallowing the child script's explicit `exit <non-zero>` status.
+
+```powershell
+# ❌ Swallows child exit code
+$out = & $script 2>&1 | Out-String
+$code = $LASTEXITCODE   # Always 0!
+
+# ✅ Invoke directly and capture exit code
+$null = & $script *>&1
+$code = $LASTEXITCODE
+```
+
+**Rules:**
+1. Never pipe a child script directly to `Out-String` when inspecting `$LASTEXITCODE`.
+
+## Pitfall: `ForEach-Object -Parallel` ScriptBlock Must Precede `-ThrottleLimit`
+
+In PowerShell 7+, placing `-ThrottleLimit` before the `-Parallel` ScriptBlock can cause parsing and parameter binding failures.
+
+```powershell
+# ❌ Fragile argument order
+$items | ForEach-Object -ThrottleLimit 10 -Parallel { ... }
+
+# ✅ Canonical argument order: ScriptBlock first
+$items | ForEach-Object -Parallel { ... } -ThrottleLimit 10
+```
+
+**Rules:**
+1. Always place the `-Parallel { ... }` block immediately after `ForEach-Object`, followed by `-ThrottleLimit <N>`.
+
+---
+
+## Pitfall: HTML Report — Grade on KPI, Body, Row, and Chart Provenance — Not "Has a Table"
+
+Auditing HTML reports by grepping for `<table>` marks every script as PASS — even a 2-row stub with fake data. The user asked for "real, detailed, script-specific data" and a structural check silently misses the fidelity gap. Test-ToolCompliance does not gate HTML body content.
+
+```powershell
+# ❌ Structural check — every HTML file passes
+if ($html -match '<table>') { Write-Host "PASS" }
+
+# ✅ Fidelity rubric (4 metrics, each +1):
+# 1. KPI tiles bound to real collected data (not hardcoded 0)
+# 2. Body built from $rows | ForEach-Object dynamically
+# 3. >=5 rows of script-specific detail (cols vary by domain)
+# 4. Charts derived from same $rows data
+# PASS = 3-4, WEAK = 1-2, FAIL = 0
+```
+
+**Rules:**
+1. When auditing HTML reports for data fidelity, score KPI provenance, body provenance, row count, and chart provenance — never grade on "has a table" alone.
+2. Encode the rubric into a future `Test-HtmlFidelity.ps1` gate.
+
+---
+
+## Pitfall: HTML Body Must Not Depend on $rows From a Different try Block (Try-Scope Leak)
+
+`ExampleTlsAudit.ps1` had console `try { $rows = foreach(...) } catch{}` then HTML `try { $rows.Count }`. The console block used a chained `if` inside `[PSCustomObject]@{}` that PS 5.1 failed to tokenize; it fell into `catch`, `$rows` was never assigned, and HTML rendered "0 combinations" from `$null`.
+
+```powershell
+# ❌ HTML trusts cross-try survival
+try { $rows = foreach ($p in $paths) { [PSCustomObject]@{ Enabled = (if ($x) { 'Yes' } else { 'No' }) } } } catch {}
+try { $html = $rows | ForEach-Object { "<tr><td>$($_.Enabled)</td></tr>" } } catch {}
+
+# ✅ Defensive re-collection inside HTML consumer
+try {
+    if (-not $rows) { $rows = foreach ($p in $paths) { $enabledLabel = if ($x) { 'Yes' } else { 'No' }; [PSCustomObject]@{ Enabled = $enabledLabel } } }
+    $html = $rows | ForEach-Object { $rowRef = $_; "<tr><td>$([System.Net.WebUtility]::HtmlEncode($rowRef.Enabled))</td></tr>" }
+} catch { Write-Verbose "HTML failed: $_" }
+```
+
+**Rules:**
+1. When HTML export consumes `$rows` populated by a prior `try`, re-collect if empty inside the consumer (`if (-not $rows) { $rows = <fresh-query> }`).
+2. Never trust cross-try variable survival.
+
+---
+
+## Pitfall: $_ Shadowing Inside Nested ForEach-Object Breaks Property Access
+
+Inside `$rows | ForEach-Object { $_.PSObject.Properties | Where-Object{} | ForEach-Object { if($_.Name -eq 'Enabled'){ $_.Enabled_Raw } } }`, every cell rendered `class="badge neutral"` because `$_.Enabled_Raw` was `$null`.
+
+PowerShell rebinds `$_` at every pipe boundary. The inner `ForEach-Object` over `PSObject.Properties` rebinds `$_` to `PSPropertyInfo`, breaking the outer-row reference. The expression `$_.Enabled_Raw` then reads a property that does not exist on `PSPropertyInfo`.
+
+```powershell
+# ❌ Inner pipe shadows outer $_
+$rows | ForEach-Object {
+    $_.PSObject.Properties | Where-Object { $_.Name -eq 'Enabled' } | ForEach-Object {
+        if ($_.Name -eq 'Enabled') { $_.Enabled_Raw } # ← $_ is now PSPropertyInfo, not the row
+    }
+}
+
+# ✅ Capture outer row before any nested pipeline
+$rows | ForEach-Object {
+    $rowRef = $_
+    $rowRef.PSObject.Properties | Where-Object { $_.Name -eq 'Enabled' } | ForEach-Object {
+        if ($_.Name -eq 'Enabled') { $rowRef.Enabled_Raw } # ← explicit outer ref
+    }
+    "<tr><td>$([System.Net.WebUtility]::HtmlEncode($rowRef.Name))</td></tr>"
+}
+```
+
+**Rules:**
+1. Inside any `ForEach-Object` body containing a nested `ForEach-Object`/`Where-Object`/`Sort-Object`, capture outer `$_` to a named variable (`$rowRef`) at the top, then reference `$rowRef.Property` inside inner blocks.
+
+---
+
+## Pitfall: Read param() Before Invoking — Parameter Errors Are Caller Errors
+
+Re-testing `ExampleFileScan.ps1` with `-LimitMB 10` (remembered from a similar tool) threw "A positional parameter cannot be found that accepts argument 10" and was misdiagnosed as a parser regression. The actual param is `[string[]]$TargetName`.
+
+```powershell
+# ❌ Passing from memory of a similar script
+.\ExampleFileScan.ps1 -LimitMB 10  # no such param
+
+# ✅ Read the contract first
+Get-Help .\ExampleFileScan.ps1 -Full
+# or: (Get-Content $path -Raw) -match '(?ms)param\((.*?)\)'
+.\ExampleFileScan.ps1 -TargetName "$env:USERPROFILE\Downloads"  # correct
+```
+
+**Rules:**
+1. Before invoking any script, read its `param()` block or `Get-Help` output.
+2. Never pass parameters from memory of similar scripts — parameter errors are caller errors.
+
+---
+
+## Pitfall: Recursive Get-ChildItem on Drive Root or Large Trees Times Out
+
+Testing `ExampleFileScan.ps1` with `-TargetName "$env:SystemDrive\"` and `"$env:TEMP"` (WinGet cache with 50k files) both timed out at 120s. `Get-ChildItem -Recurse` enumerates every file; TEMP and drive root are huge. Smoke-test instructions that default to drive root will hang CI.
+
+```powershell
+# ❌ Huge tree — times out
+.\ExampleFileScan.ps1 -TargetName "$env:SystemDrive\"
+
+# ✅ Small, representative path
+.\ExampleFileScan.ps1 -TargetName "$env:USERPROFILE\Downloads"
+```
+
+**Rules:**
+1. Smoke-test recursive filesystem scripts against a small representative path (e.g., `Downloads`).
+2. Never test `-Recurse` against a drive root in CI.
+3. For production, add `-Depth` or document a sensible default path.
+
+---
+
+## Pitfall: KPI Tiles Must Be Domain-Specific — Generic OK/Failed Counters Are Drift
+
+WEAK scripts had KPIs like `@{value=$ok; label='Targets OK'}` — generic counters identical across 20 scripts, saying nothing about TLS/LAPS/SecureBoot at a glance.
+
+```powershell
+# ❌ Generic — could appear in any script
+@{ value = $ok; label = 'Targets OK' }
+
+# ✅ Domain-specific (ExampleTlsAudit)
+@{ value = $weakCount; label = 'Weak Protocols Enabled' }
+@{ value = $modernCount; label = 'Modern Protocols' }
+```
+
+**Rules:**
+1. Every HTML report KPI must be domain-specific. If a label could appear identically in 5 unrelated scripts, it is too generic.
+2. `OK/Failed` counters only fit pass/fail scripts (e.g., `ExampleComplianceCheck`, STIG).
+
+---
+
+## Pitfall: HTML Uses Carbon Dark; WPF Uses Tailwind Slate — Never Mix
+
+Carbon Dark: `#0f62fe`, IBM Plex Sans/Mono, `#161616` background. Slate: `#3B82F6`, Segoe UI Variable, `#F1F5F9`. Helper name `Export-ProfessionalHtmlReport` has no "Carbon" in it; inline CSS hex codes carry no token names — easy to conflate.
+
+```powershell
+# ❌ Slate token in HTML
+--background: #F1F5F9; font-family: 'Segoe UI Variable'
+
+# ✅ Carbon token in HTML (canonical: templates/EnterpriseHtmlReport.template.ps1)
+--cds-background: #161616; font-family: 'IBM Plex Sans', 'IBM Plex Mono'
+```
+
+**Rules:**
+1. HTML output always uses Carbon Dark (`templates/EnterpriseHtmlReport.template.ps1`).
+2. WPF always uses Tailwind Slate (`references/xaml-styles.md`).
+3. Never mix — inline Carbon CSS (hex) and Slate XAML (DynamicResource) are not interchangeable.
+
+---
+
+## Pitfall: Full Triage Pass Before Any Fix — Output Sorted FAIL→WEAK→PASS Table
+
+Starting fixes immediately without a full classification leaves the operator with no landscape view. Fixes interleaved ad-hoc with audits make re-prioritization impossible.
+
+```powershell
+# ✅ Triage first, fix second
+# 1. Audit all 32 scripts → table:
+# | # | Script | Verdict | Issue |
+# |---|--------|---------|-------|
+# | 1 | ExampleTlsAudit | WEAK | Generic KPIs, HtmlEncode gaps |
+# 2 | ExampleLapsAudit         | PASS | ✅ |
+# 2. Then fix in order: FAIL → WEAK → PASS
+```
+
+**Rules:**
+1. When auditing a library, do a full classification pass before any fix and output a sorted `| # | Path | Verdict | Issue |` table (`FAIL` → `WEAK` → `PASS`).
+
+---
+
+## Pitfall: Bulk Audit (N > 3 files) → Task Agent; Single-File (N ≤ 3) → Inline read+edit
+
+Reading 32 scripts one-by-one with `read` tool (16+ calls, 450-550 lines each) then manually cross-referencing is slow and error-prone. One-file depth is wasted on bulk classification.
+
+```powershell
+# N > 3 → task agent with precise output spec (one row per script, sorted by severity)
+# N ≤ 3 → inline read+edit directly
+```
+
+**Rules:**
+1. `N > 3` → delegate bulk-read-and-classify to a task agent with a precise output spec.
+2. `N ≤ 3` → use `read` + `edit` directly.
+
+---
+
+## Pitfall: HtmlEncode Every Dynamic Cell — No Exceptions; Wrap Paths in code
+
+`~80%` of cells used `[System.Net.WebUtility]::HtmlEncode($value)` but `~20%` interpolated directly (`<td>$value</td>`). Unsafe for `&`, `<`, `>`, `"`, `'` in computer names, cert subjects, registry paths, SIDs.
+
+```powershell
+# ❌ Raw interpolation
+"<td>$($row.Path)</td>"
+
+# ✅ Always encode; wrap paths/identifiers in <code>
+"<td><code>$([System.Net.WebUtility]::HtmlEncode($row.Path))</code></td>"
+"<td>$([System.Net.WebUtility]::HtmlEncode($row.Name))</td>"
+```
+
+**Rules:**
+1. Every dynamic value rendered into HTML must go through `[System.Net.WebUtility]::HtmlEncode` — no exceptions.
+2. Wrap paths/identifiers/SIDs/GUIDs in `<code>` after encoding.
+
+---
+
+## Pitfall: Pre-Existing Bugs Out of Scope Unless HTML Depends on Them
+
+Noticed `ExampleComplianceCheck` and `ExampleTlsAudit` had pre-existing console warnings "The term if is not recognized" from chained `if` inside `[PSCustomObject]@{}` inside `foreach` inside `try`. Fixing the console block as well would expand scope and risk regression.
+
+```powershell
+# HTML fidelity audit → fix only HTML block
+# Pre-existing console bug → log as separate follow-up
+# Exception: if HTML depends on the buggy variable, add defensive re-collection
+try { $rows = foreach ($p in $paths) { [PSCustomObject]@{ V = (if ($x) {1} else {0}) } } } catch {}
+# HTML:
+try { if (-not $rows) { $rows = foreach ($p in $paths) { $v = if ($x){1}else{0}; [PSCustomObject]@{ V=$v } } } } catch {}
+```
+
+**Rules:**
+1. When auditing for one concern (HTML fidelity), fix only that concern.
+2. Log additional bugs as separate follow-ups.
+3. If the fix depends on the buggy variable, add defensive re-collection instead.
+
+---
+
+## Pitfall: Three-Gate HTML Verification — Parser → Run → Row/Cell/Badge Count
+
+`[Parser]::ParseFile` = 0 errors is necessary but not sufficient. Parse success does not prove HTML renders correctly or contains real data.
+
+```powershell
+# Gate 1: Parser
+$errs = $null; [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$errs); $errs.Count -eq 0
+
+# Gate 2: Run and produce file
+& $script -TargetName $smallPath; Test-Path $htmlPath
+
+# Gate 3: Metrics
+$html = Get-Content $htmlPath -Raw
+([regex]::Matches($html,'<tr>')).Count   # rows
+([regex]::Matches($html,'<td>')).Count   # cells
+([regex]::Matches($html,'class="badge"')).Count  # badges
+# Compare before/after: e.g., 2 cols/15 rows → 5 cols/42 rows/161 cells
+```
+
+**Rules:**
+1. After fixing HTML fidelity, verify with three gates: (1) Parser 0 errors, (2) script runs and produces HTML, (3) row/cell/badge counts match expected before vs after.
 

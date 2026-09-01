@@ -469,6 +469,264 @@
                                          "Paragraph",
                                          "SessionElevationPill"
                                      ]
+                  },
+                  {
+                      "id":  26,
+                      "category":  "cli-reporting",
+                      "type":  "Type 3",
+                      "difficulty":  "medium",
+                      "prompt":  "Create a PowerShell CLI administration script that queries all Active Directory computer objects (1000+ items), processes security configurations with a responsive console progress bar, and outputs a standardized per-target summary table.",
+                      "expected_output":  "A Type 3 CLI script implementing Write-Progress with bounded percentage/activity updates, Initialize-Log, and canonical Write-Summary for standardized per-target tabular results.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "Write-Progress",
+                                         "Write-Progress -Activity",
+                                         "-Completed",
+                                         "[Math]::Max",
+                                         "Initialize-Log",
+                                         "Write-Summary"
+                                     ]
+                  },
+                  {
+                      "id":  27,
+                      "category":  "dual-export-reporting",
+                      "type":  "Type 3",
+                      "difficulty":  "medium",
+                      "prompt":  "Create an enterprise PowerShell audit script that scans local Windows Defender firewall status and exports both a machine-readable CSV and an executive-ready dark-themed HTML dashboard to the Reports directory.",
+                      "expected_output":  "A CLI tool implementing dual export with Export-Csv and Export-StandardHtmlReport / EnterpriseHtmlReport template tokens (--cds-background: #161616), anchored safely to script location via Law 12.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "Export-Csv",
+                                         "Export-StandardHtmlReport",
+                                         ".csv",
+                                         ".html",
+                                         "Reports",
+                                         "--cds-background"
+                                     ]
+                  },
+                  {
+                      "id":  28,
+                      "category":  "header-order-compliance",
+                      "type":  "Type 2",
+                      "difficulty":  "hard",
+                      "prompt":  "Write an Intune proactive detection script that verifies BitLocker encryption and TPM 2.0 readiness, strictly adhering to the non-negotiable HEADER LAW sequence and safety requirements.",
+                      "expected_output":  "An Intune detection script with canonical header fields strictly in sequence (.TITLE -> .SYNOPSIS -> .DESCRIPTION -> .TAGS -> .REMEDIATIONTYPE -> .PAIRSCRIPT -> .PLATFORM -> .PERMISSIONS -> .AUTHOR -> .VERSION -> .CHANGELOG -> .LASTUPDATE -> .EXAMPLE -> .NOTES), with #Requires -Version 5.1 immediately following the header block.",
+                      "files":  [
+
+                                ],
+                       "assertions":  [
+                                         ".REMEDIATIONTYPE",
+                                         ".PAIRSCRIPT",
+                                         ".PLATFORM",
+                                         ".PERMISSIONS",
+                                         ".CHANGELOG",
+                                         ".LASTUPDATE",
+                                         "#Requires -Version 5.1",
+                                         "exit 0",
+                                         "exit 1"
+                                     ]
+                  },
+                  {
+                      "id":  29,
+                      "category":  "html-fidelity-audit",
+                      "type":  "Type 3",
+                      "difficulty":  "hard",
+                      "prompt":  "Audit the HTML reports in C:\\Scripts\\Reports for data fidelity. There are 6 scripts that emit HTML dashboards with KPI tiles and tables. Check whether each report shows real script-specific data or just a generic 2-row stub. Grade each file on KPI provenance, body provenance, row count, and chart provenance — not just 'has a table'. Output a sorted table | # | Script | Verdict (PASS/WEAK/FAIL) | Issue | before making any fixes.",
+                      "expected_output":  "A sorted triage table with FAIL first, then WEAK, then PASS, scoring each script on the 4-metric rubric (KPI bound to real data, body built from $rows dynamically, >=5 rows of domain detail, charts from same data). PASS=3-4, WEAK=1-2, FAIL=0. No fixes yet — classify only.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "PASS",
+                                         "WEAK",
+                                         "FAIL",
+                                         "KPI",
+                                         "4-metric",
+                                         "sorted"
+                                     ]
+                  },
+                  {
+                      "id":  30,
+                      "category":  "html-try-scope",
+                      "type":  "Type 3",
+                      "difficulty":  "hard",
+                      "prompt":  "Fix C:\\Scripts\\ExampleTlsAudit\\ExampleTlsAudit.ps1: the console block does try { $rows = foreach ($p in $paths) { [PSCustomObject]@{ Enabled = (if ($x){'Yes'}else{'No'}) } } } catch {} and the HTML block later does try { $html = $rows.Count } catch {}. When PS 5.1 fails to tokenize the chained if-inside-hashtable, $rows is never assigned and the HTML renders '0 combinations'. Make the HTML block self-sufficient.",
+                      "expected_output":  "The HTML try block now defensively re-collects: if (-not $rows) { $rows = foreach (...) } with the chained if extracted to $enabledLabel variables before the hashtable. HTML succeeds even when the console try fails. No cross-try trust.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "if (-not $rows)",
+                                         "re-collection",
+                                         "EnabledLabel"
+                                     ]
+                  },
+                  {
+                      "id":  31,
+                      "category":  "html-shadowing",
+                      "type":  "Type 3",
+                      "difficulty":  "hard",
+                      "prompt":  "Fix the HTML export in C:\\Scripts\\ExampleTlsAudit\\ExampleTlsAudit.ps1: inside $rows | ForEach-Object { $_.PSObject.Properties | Where-Object { $_.Name -eq 'Enabled' } | ForEach-Object { if ($_.Name -eq 'Enabled') { $_.Enabled_Raw } } } every badge renders neutral because $_.Enabled_Raw is $null. The outer row's $_ is shadowed by the inner pipeline.",
+                      "expected_output":  "Outer $_ captured as $rowRef = $_ at the top of the outer ForEach-Object body, and inner block uses $rowRef.Enabled_Raw. Badges now render success/warning/error correctly.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "$rowRef = $_",
+                                         "rowRef.Enabled",
+                                         "badge"
+                                     ]
+                  },
+                  {
+                      "id":  32,
+                      "category":  "cli-param-read",
+                      "type":  "Type 3",
+                      "difficulty":  "medium",
+                      "prompt":  "Run C:\\Scripts\\ExampleFileScan\\ExampleFileScan.ps1 to test its HTML output. I think the size limit flag is -LimitMB 10 but I'm not sure — figure out the correct parameter and run it against a small folder like $env:USERPROFILE\\Downloads. The HTML should list 30+ files.",
+                      "expected_output":  "The agent reads the param() block first (HelpMessage or [string[]]$TargetName), discovers the actual param is -TargetName, and invokes with -TargetName \"$env:USERPROFILE\\Downloads\". HTML with 30+ rows is produced. No 'positional parameter cannot be found' error.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "-TargetName",
+                                         "param()",
+                                         "Get-Help"
+                                     ]
+                  },
+                  {
+                      "id":  33,
+                      "category":  "cli-recurse-scope",
+                      "type":  "Type 3",
+                      "difficulty":  "medium",
+                      "prompt":  "Smoke-test C:\\Scripts\\ExampleFileScan\\ExampleFileScan.ps1 which does Get-ChildItem -Recurse. Pick a small representative path — do not point it at the drive root or $env:TEMP (they have 50k+ files and will time out).",
+                      "expected_output":  "Agent chooses a small path like $env:USERPROFILE\\Downloads and completes within the timeout. No 120s hang. HTML is produced.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "Downloads",
+                                         "Get-ChildItem"
+                                     ]
+                  },
+                  {
+                      "id":  34,
+                      "category":  "html-kpi-domain",
+                      "type":  "Type 3",
+                      "difficulty":  "medium",
+                      "prompt":  "The HTML report in C:\\Scripts\\ExampleLapsAudit\\ExampleLapsAudit.ps1 currently shows generic KPI tiles: 'Targets OK' / 'Failed'. Replace them with domain-specific KPIs that tell the operator the LAPS state at a glance — think what a helpdesk tech needs for LAPS. Generic OK/Failed is drift.",
+                      "expected_output":  "KPIs now domain-specific: e.g., LAPS State, Password Age, Backup Directory, Encryption — not generic OK/Failed. Each label could not appear identically in 5 unrelated scripts.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "LAPS",
+                                         "Password Age",
+                                         "domain-specific"
+                                     ]
+                  },
+                  {
+                      "id":  35,
+                      "category":  "design-system-html-wpf",
+                      "type":  "Type 1",
+                      "difficulty":  "easy",
+                      "prompt":  "I'm about to generate an HTML executive report for my new audit script and also a WPF helpdesk dashboard. Just to confirm — which design system and tokens should each surface use? I don't want to mix them.",
+                      "expected_output":  "Agent answers: HTML uses IBM Carbon Dark (templates/EnterpriseHtmlReport.template.ps1, --cds-background #161616, IBM Plex Sans/Mono). WPF uses Tailwind Slate (references/xaml-styles.md, DynamicResource tokens, Segoe UI Variable). Never mix.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "Carbon Dark",
+                                         "Tailwind Slate",
+                                         "EnterpriseHtmlReport",
+                                         "--cds-"
+                                     ]
+                  },
+                  {
+                      "id":  36,
+                      "category":  "audit-triage-first",
+                      "type":  "Type 3",
+                      "difficulty":  "hard",
+                      "prompt":  "I have 32 PowerShell scripts in C:\\Scripts that each emit HTML reports. Before fixing anything, classify every file's HTML fidelity and output a single sorted table | # | Script | Verdict | Issue | with FAIL first, then WEAK, then PASS. Only after I approve the table should you start fixing.",
+                      "expected_output":  "A single sorted triage table covering all 32 scripts, FAIL at top, WEAK in middle, PASS at bottom, each row with one-sentence issue. No fixes applied yet.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "FAIL",
+                                         "WEAK",
+                                         "PASS",
+                                         "sorted",
+                                         "triage"
+                                     ]
+                  },
+                  {
+                      "id":  37,
+                      "category":  "audit-agent-threshold",
+                      "type":  "Type 3",
+                      "difficulty":  "medium",
+                      "prompt":  "Audit 5 PowerShell scripts in C:\\Scripts for HTML report fidelity — each one needs to be read and classified as PASS/WEAK/FAIL on the 4-metric rubric. Do a proper bulk audit.",
+                      "expected_output":  "Agent delegates to a task agent (subagent) for the 5-file bulk read+classify with a precise output spec, rather than 5 sequential read tool calls.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "task",
+                                         "bulk",
+                                         "classify"
+                                     ]
+                  },
+                  {
+                      "id":  38,
+                      "category":  "html-encode-cells",
+                      "type":  "Type 3",
+                      "difficulty":  "medium",
+                      "prompt":  "Fix C:\\Scripts\\ExampleIdentityInventory\\ExampleIdentityInventory.ps1 HTML export: cells currently render as \"<td>$($row.Path)</td>\" and \"<td>$($row.SID)</td>\" without HtmlEncode. A computer named 'AT&T-PC' or a path with '&' will break the HTML. Wrap appropriately.",
+                      "expected_output":  "Every dynamic cell now uses [System.Net.WebUtility]::HtmlEncode($value) and paths/identifiers are wrapped in <code>HtmlEncode(...)</code> after encoding. No raw interpolation remains.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "HtmlEncode",
+                                         "<code>",
+                                         "System.Net.WebUtility"
+                                     ]
+                  },
+                  {
+                      "id":  39,
+                      "category":  "audit-scope-discipline",
+                      "type":  "Type 3",
+                      "difficulty":  "medium",
+                      "prompt":  "You're auditing C:\\Scripts for HTML fidelity only. While reading ExampleTlsAudit.ps1 you notice the console block has a pre-existing warning 'The term if is not recognized' from a chained if-inside-hashtable that was already broken before your audit. Don't fix the console block — just make sure the HTML block is self-sufficient and note the console bug as a separate follow-up.",
+                      "expected_output":  "Agent leaves the console block untouched (or logs it as out-of-scope), adds defensive re-collection in the HTML block so HTML succeeds regardless, and mentions the console bug as a separate backlog item rather than fixing it inline.",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "out of scope",
+                                         "re-collection",
+                                         "follow-up"
+                                     ]
+                  },
+                  {
+                      "id":  40,
+                      "category":  "html-verify-3gate",
+                      "type":  "Type 3",
+                      "difficulty":  "medium",
+                      "prompt":  "You just fixed HTML fidelity in C:\\Scripts\\ExampleTlsAudit.ps1. Verify the fix with all three gates: parser, run, and HTML metrics — not just ParseFile.",
+                      "expected_output":  "Agent runs: (1) [Parser]::ParseFile = 0 errors, (2) executes the script and confirms an .html file was produced, (3) counts <tr>/<td>/badge elements and reports before vs after (e.g., 8 rows/3 badges -> 21 rows/27 badges).",
+                      "files":  [
+
+                                ],
+                      "assertions":  [
+                                         "Parser",
+                                         "ParseFile",
+                                         "<tr>",
+                                         "badge"
+                                     ]
                   }
               ]
 }

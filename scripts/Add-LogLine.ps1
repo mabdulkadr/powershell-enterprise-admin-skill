@@ -1,4 +1,4 @@
-﻿<#
+<#
 .TITLE
     Add-LogLine
 
@@ -9,12 +9,6 @@
     The single source of truth for WPF tool logging (Type 1).
     Logs color-coded messages to console, appends timestamped entries to a session log file,
     updates the UI status bar via Dispatcher, and filters immediate consecutive duplicate messages.
-
-.PARAMETER Level
-    Log level ('INFO', 'SUCCESS', 'WARNING', 'ERROR', 'DEBUG'). Default is 'INFO'.
-
-.PARAMETER Message
-    The text message to log.
 
 .TAGS
     Logging,GUI,WPF
@@ -43,8 +37,17 @@
 .LASTUPDATE
     2026-08-30
 
+.PARAMETER Level
+    Log level ('INFO', 'SUCCESS', 'WARNING', 'ERROR', 'DEBUG'). Default is 'INFO'.
+
+.PARAMETER Message
+    The text message to log.
+
 .EXAMPLE
     Add-LogLine -Message 'Operation completed successfully' -Level 'SUCCESS'
+.NOTES
+    - Canonical GUI logging helper — copy verbatim; do not retype (Identity Lock).
+
 #>
 
 #Requires -Version 5.1
@@ -109,8 +112,9 @@ function Add-LogLine {
                 $script:lblStatusText.Text = "[$Level] $Message"
             })
         }
-        catch {
-            # Window closing or thread unavailable
+        catch [System.Exception] {
+            # Window closing or thread unavailable during dispatch
+            $null = $_
         }
     }
 }
